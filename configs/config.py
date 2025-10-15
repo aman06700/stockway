@@ -9,7 +9,6 @@ class Config:
     DEBUG = getenv("DEBUG", "False")
 
     DATABASE_URL = getenv("DATABASE_URL")
-    # Add other configuration variables as needed
     DB_USER = getenv("DB_USER")
     DB_PASSWORD = getenv("DB_PASSWORD")
     DB_HOST = getenv("DB_HOST", "localhost")

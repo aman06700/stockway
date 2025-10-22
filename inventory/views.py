@@ -26,7 +26,9 @@ class WarehouseScopedMixin:
         request = self.request
         view = self
         if not IsSuperAdmin().has_permission(request, view):
-            if not IsWarehouseOwnerOrSuperAdmin().has_object_permission(request, view, warehouse):
+            if not IsWarehouseOwnerOrSuperAdmin().has_object_permission(
+                request, view, warehouse
+            ):
                 # Hide existence
                 raise NotFound()
         return warehouse
@@ -67,5 +69,3 @@ class ItemDetailView(WarehouseScopedMixin, generics.RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         # Ensure non-negative quantity and ownership already handled by serializer and mixin
         return super().update(request, *args, **kwargs)
-
-

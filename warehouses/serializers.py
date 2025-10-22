@@ -10,7 +10,16 @@ class WarehouseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Warehouse
-        fields = ["id", "name", "address", "latitude", "longitude", "admin", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "name",
+            "address",
+            "latitude",
+            "longitude",
+            "admin",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def validate_latitude(self, value):

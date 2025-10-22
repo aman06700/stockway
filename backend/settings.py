@@ -139,6 +139,17 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
 
+# REST Framework Configuration
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "configs.supabase_auth.SupabaseAuthentication",  # Primary: Supabase JWT
+        "configs.supabase_auth.SupabaseTokenAuthentication",  # Fallback: Django Token
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -148,3 +159,25 @@ CACHES = {
         },
     }
 }
+
+# Supabase Configuration
+SUPABASE_URL = Config.SUPABASE_URL
+SUPABASE_KEY = Config.SUPABASE_KEY
+SUPABASE_SERVICE_KEY = Config.SUPABASE_SERVICE_KEY
+SUPABASE_JWT_SECRET = Config.SUPABASE_JWT_SECRET
+
+# Optional: Use Supabase Managed Postgres (comment out to use local DB)
+# To enable Supabase Postgres, uncomment the lines below and set SUPABASE_DB_* in .env
+USE_SUPABASE_DB = Config.SUPABASE_DB_HOST is not None
+
+if USE_SUPABASE_DB:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": Config.SUPABASE_DB_NAME,
+            "USER": Config.SUPABASE_DB_USER,
+            "PASSWORD": Config.SUPABASE_DB_PASSWORD,
+            "HOST": Config.SUPABASE_DB_HOST,
+            "PORT": Config.SUPABASE_DB_PORT,
+        }
+    }

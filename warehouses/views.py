@@ -127,8 +127,9 @@ class WarehouseDetailView(APIView):
             data.pop("admin", None)
         serializer = WarehouseSerializer(warehouse, data=data, partial=True)
         if serializer.is_valid():
-            if "admin" in serializer.validated_data and not IsSuperAdmin().has_permission(
-                request, self
+            if (
+                "admin" in serializer.validated_data
+                and not IsSuperAdmin().has_permission(request, self)
             ):
                 return Response(
                     {"admin": ["You cannot change admin."]},
@@ -152,8 +153,9 @@ class WarehouseDetailView(APIView):
             data.pop("admin", None)
         serializer = WarehouseSerializer(warehouse, data=data)
         if serializer.is_valid():
-            if "admin" in serializer.validated_data and not IsSuperAdmin().has_permission(
-                request, self
+            if (
+                "admin" in serializer.validated_data
+                and not IsSuperAdmin().has_permission(request, self)
             ):
                 return Response(
                     {"admin": ["You cannot change admin."]},
@@ -201,9 +203,7 @@ class WarehouseOrderConfirmView(APIView):
 
         order.status = "accepted"
         order.save()
-        return Response(
-            OrderSerializer(order).data, status=status.HTTP_200_OK
-        )
+        return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
 
 
 class WarehouseOrderAssignView(APIView):
@@ -245,8 +245,9 @@ class WarehouseOrderAssignView(APIView):
         shopkeeper_profile = order.shopkeeper.shopkeeper_profile
         warehouse = order.warehouse
 
-        lat1, lon1 = radians(shopkeeper_profile.latitude), radians(
-            shopkeeper_profile.longitude
+        lat1, lon1 = (
+            radians(shopkeeper_profile.latitude),
+            radians(shopkeeper_profile.longitude),
         )
         lat2, lon2 = radians(warehouse.latitude), radians(warehouse.longitude)
 
@@ -268,6 +269,4 @@ class WarehouseOrderAssignView(APIView):
         order.status = "in_transit"
         order.save()
 
-        return Response(
-            OrderSerializer(order).data, status=status.HTTP_200_OK
-        )
+        return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)

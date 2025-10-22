@@ -14,7 +14,11 @@ urlpatterns = [
     path("", WarehouseCreateView.as_view(), name="warehouse-create"),
     path("<int:pk>/", WarehouseDetailView.as_view(), name="warehouse-detail"),
     # Inventory endpoints scoped to a warehouse
-    path("<int:warehouse_id>/items/", ItemListCreateView.as_view(), name="warehouse-items"),
+    path(
+        "<int:warehouse_id>/items/",
+        ItemListCreateView.as_view(),
+        name="warehouse-items",
+    ),
     path(
         "<int:warehouse_id>/items/<int:pk>/",
         ItemDetailView.as_view(),

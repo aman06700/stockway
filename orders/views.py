@@ -1,4 +1,3 @@
-
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from .models import Order
@@ -28,4 +27,3 @@ class ShopkeeperOrderListAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return Order.objects.filter(shopkeeper=self.request.user)
-

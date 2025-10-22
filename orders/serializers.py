@@ -1,4 +1,3 @@
-
 from rest_framework import serializers
 from .models import Order, OrderItem
 from inventory.models import Item
@@ -81,7 +80,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             quantity = item_data["quantity"]
             price = Item.objects.get(id=item.id).price
             total_amount += price * quantity
-            OrderItem.objects.create(order=order, item=item, quantity=quantity, price=price)
+            OrderItem.objects.create(
+                order=order, item=item, quantity=quantity, price=price
+            )
 
             # Update inventory
             inventory_item = Item.objects.get(id=item.id)
@@ -114,4 +115,3 @@ class OrderSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
-

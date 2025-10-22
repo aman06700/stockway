@@ -7,7 +7,11 @@ class IsShopkeeper(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == 'SHOPKEEPER')
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "SHOPKEEPER"
+        )
 
 
 class IsWarehouseAdmin(BasePermission):
@@ -16,7 +20,11 @@ class IsWarehouseAdmin(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == 'WAREHOUSE_ADMIN')
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "WAREHOUSE_ADMIN"
+        )
 
 
 class IsRider(BasePermission):
@@ -25,7 +33,11 @@ class IsRider(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == 'RIDER')
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "RIDER"
+        )
 
 
 class IsSuperAdmin(BasePermission):
@@ -34,7 +46,11 @@ class IsSuperAdmin(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == 'SUPER_ADMIN')
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "SUPER_ADMIN"
+        )
 
 
 class IsWarehouseAdminOrSuperAdmin(BasePermission):
@@ -43,4 +59,11 @@ class IsWarehouseAdminOrSuperAdmin(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.role == 'WAREHOUSE_ADMIN' or request.user.role == 'SUPER_ADMIN'))
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and (
+                request.user.role == "WAREHOUSE_ADMIN"
+                or request.user.role == "SUPER_ADMIN"
+            )
+        )

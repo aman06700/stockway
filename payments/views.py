@@ -29,15 +29,20 @@ class PaymentViewSet(viewsets.ModelViewSet):
     - PATCH /payments/{id}/complete/ - Mark payment as completed (mock payment)
     - PATCH /payments/{id}/fail/ - Mark payment as failed
     """
+
     queryset = Payment.objects.select_related(
-        'order', 'warehouse', 'payer', 'payee', 'rider'
+        "order", "warehouse", "payer", "payee", "rider"
     ).all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    filterset_fields = ['status', 'payment_type', 'warehouse', 'rider', 'order']
-    ordering_fields = ['created_at', 'amount', 'status']
-    search_fields = ['transaction_id', 'notes']
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+        filters.SearchFilter,
+    ]
+    filterset_fields = ["status", "payment_type", "warehouse", "rider", "order"]
+    ordering_fields = ["created_at", "amount", "status"]
+    search_fields = ["transaction_id", "notes"]
 
     def get_queryset(self):
         """Filter payments based on user role."""
@@ -58,7 +63,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
         return Payment.objects.none()
 
-    @action(detail=False, methods=['post'], url_path='shopkeeper-payment')
+    @action(detail=False, methods=["post"], url_path="shopkeeper-payment")
     @transaction.atomic
     def shopkeeper_payment(self, request):
         """
@@ -68,23 +73,21 @@ class PaymentViewSet(viewsets.ModelViewSet):
         if request.user.role != User.Role.SHOPKEEPER:
             return Response(
                 {"error": "Only shopkeepers can make payments to warehouses."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = CreateShopkeeperPaymentSerializer(
-            data=request.data,
-            context={'request': request}
+            data=request.data, context={"request": request}
         )
 
         if serializer.is_valid():
             payment = serializer.save()
             return Response(
-                PaymentSerializer(payment).data,
-                status=status.HTTP_201_CREATED
+                PaymentSerializer(payment).data, status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'], url_path='rider-payout')
+    @action(detail=False, methods=["post"], url_path="rider-payout")
     @transaction.atomic
     def rider_payout(self, request):
         """
@@ -94,23 +97,21 @@ class PaymentViewSet(viewsets.ModelViewSet):
         if request.user.role not in [User.Role.WAREHOUSE_ADMIN, User.Role.SUPER_ADMIN]:
             return Response(
                 {"error": "Only warehouse admins can create rider payouts."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = CreateRiderPayoutSerializer(
-            data=request.data,
-            context={'request': request}
+            data=request.data, context={"request": request}
         )
 
         if serializer.is_valid():
             payment = serializer.save()
             return Response(
-                PaymentSerializer(payment).data,
-                status=status.HTTP_201_CREATED
+                PaymentSerializer(payment).data, status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['patch'], url_path='complete')
+    @action(detail=True, methods=["patch"], url_path="complete")
     @transaction.atomic
     def complete_payment(self, request, pk=None):
         """
@@ -124,30 +125,26 @@ class PaymentViewSet(viewsets.ModelViewSet):
             if payment.warehouse.admin != request.user:
                 return Response(
                     {"error": "You can only complete payments for your warehouse."},
-                    status=status.HTTP_403_FORBIDDEN
+                    status=status.HTTP_403_FORBIDDEN,
                 )
         elif request.user.role != User.Role.SUPER_ADMIN:
             return Response(
-                {"error": "Insufficient permissions."},
-                status=status.HTTP_403_FORBIDDEN
+                {"error": "Insufficient permissions."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        if payment.status == 'completed':
+        if payment.status == "completed":
             return Response(
                 {"error": "Payment is already completed."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        payment.status = 'completed'
+        payment.status = "completed"
         payment.completed_at = timezone.now()
         payment.save()
 
-        return Response(
-            PaymentSerializer(payment).data,
-            status=status.HTTP_200_OK
-        )
+        return Response(PaymentSerializer(payment).data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['patch'], url_path='fail')
+    @action(detail=True, methods=["patch"], url_path="fail")
     @transaction.atomic
     def fail_payment(self, request, pk=None):
         """
@@ -161,24 +158,23 @@ class PaymentViewSet(viewsets.ModelViewSet):
             if payment.warehouse.admin != request.user:
                 return Response(
                     {"error": "You can only modify payments for your warehouse."},
-                    status=status.HTTP_403_FORBIDDEN
+                    status=status.HTTP_403_FORBIDDEN,
                 )
         elif request.user.role != User.Role.SUPER_ADMIN:
             return Response(
-                {"error": "Insufficient permissions."},
-                status=status.HTTP_403_FORBIDDEN
+                {"error": "Insufficient permissions."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        if payment.status == 'completed':
+        if payment.status == "completed":
             return Response(
                 {"error": "Cannot fail a completed payment."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = UpdatePaymentStatusSerializer(
             payment,
-            data={'status': 'failed', 'notes': request.data.get('notes', '')},
-            partial=True
+            data={"status": "failed", "notes": request.data.get("notes", "")},
+            partial=True,
         )
 
         if serializer.is_valid():
@@ -186,7 +182,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get'], url_path='statistics')
+    @action(detail=False, methods=["get"], url_path="statistics")
     def statistics(self, request):
         """
         Get payment statistics for the requesting user.
@@ -195,24 +191,24 @@ class PaymentViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
 
         stats = {
-            'total_payments': queryset.count(),
-            'pending': queryset.filter(status='pending').count(),
-            'completed': queryset.filter(status='completed').count(),
-            'failed': queryset.filter(status='failed').count(),
-            'total_amount_pending': sum(
-                p.amount for p in queryset.filter(status='pending')
+            "total_payments": queryset.count(),
+            "pending": queryset.filter(status="pending").count(),
+            "completed": queryset.filter(status="completed").count(),
+            "failed": queryset.filter(status="failed").count(),
+            "total_amount_pending": sum(
+                p.amount for p in queryset.filter(status="pending")
             ),
-            'total_amount_completed': sum(
-                p.amount for p in queryset.filter(status='completed')
+            "total_amount_completed": sum(
+                p.amount for p in queryset.filter(status="completed")
             ),
         }
 
         if user.role == User.Role.WAREHOUSE_ADMIN:
-            stats['shopkeeper_payments'] = queryset.filter(
-                payment_type='shopkeeper_to_warehouse'
+            stats["shopkeeper_payments"] = queryset.filter(
+                payment_type="shopkeeper_to_warehouse"
             ).count()
-            stats['rider_payouts'] = queryset.filter(
-                payment_type='warehouse_to_rider'
+            stats["rider_payouts"] = queryset.filter(
+                payment_type="warehouse_to_rider"
             ).count()
 
         return Response(stats, status=status.HTTP_200_OK)

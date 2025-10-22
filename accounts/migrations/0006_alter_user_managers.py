@@ -5,16 +5,15 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0005_remove_user_username'),
+        ("accounts", "0005_remove_user_username"),
     ]
 
     operations = [
         migrations.AlterModelManagers(
-            name='user',
+            name="user",
             managers=[
-                ('objects', accounts.models.UserManager()),
+                ("objects", accounts.models.UserManager()),
             ],
         ),
     ]

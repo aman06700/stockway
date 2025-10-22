@@ -44,6 +44,16 @@ class User(AbstractUser):
     )
     is_verified = models.BooleanField(default=False)
 
+    # Supabase integration field
+    supabase_uid = models.CharField(
+        max_length=255,
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Supabase Auth UID for JWT authentication",
+    )
+
     USERNAME_FIELD = "phone_number"
     REQUIRED_FIELDS = []
 
@@ -55,7 +65,9 @@ class User(AbstractUser):
 
 class ShopkeeperProfile(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="shopkeeper_profile"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="shopkeeper_profile",
     )
     shop_name = models.CharField(max_length=255)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)

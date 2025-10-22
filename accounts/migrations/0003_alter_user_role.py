@@ -4,15 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0002_remove_user_otp_remove_user_otp_created_at'),
+        ("accounts", "0002_remove_user_otp_remove_user_otp_created_at"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='user',
-            name='role',
-            field=models.CharField(choices=[('SHOPKEEPER', 'Shopkeeper'), ('WAREHOUSE_ADMIN', 'Warehouse Admin'), ('RIDER', 'Rider'), ('SUPER_ADMIN', 'Super Admin')], default='SHOPKEEPER', max_length=50),
+            model_name="user",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("SHOPKEEPER", "Shopkeeper"),
+                    ("WAREHOUSE_ADMIN", "Warehouse Admin"),
+                    ("RIDER", "Rider"),
+                    ("SUPER_ADMIN", "Super Admin"),
+                ],
+                default="SHOPKEEPER",
+                max_length=50,
+            ),
         ),
     ]

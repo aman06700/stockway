@@ -28,9 +28,7 @@ class ItemSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at", "available"]
-        extra_kwargs = {
-            "warehouse": {"required": False}
-        }
+        extra_kwargs = {"warehouse": {"required": False}}
 
     def validate_quantity(self, value):
         if value is None:
@@ -47,7 +45,11 @@ class ItemSerializer(serializers.ModelSerializer):
             if not IsSuperAdmin().has_permission(request, self):
                 # request.user must own the warehouse
                 if getattr(warehouse, "admin_id", None) != request.user.id:
-                    raise serializers.ValidationError({"warehouse": "You do not have permission to manage items for this warehouse."})
+                    raise serializers.ValidationError(
+                        {
+                            "warehouse": "You do not have permission to manage items for this warehouse."
+                        }
+                    )
         return attrs
 
     def get_available(self, obj: Item):

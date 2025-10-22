@@ -25,4 +25,5 @@ urlpatterns = [
     path("warehouse/", include("warehouses.urls")),
     path("orders/", include("orders.urls")),
     path("payments/", include("payments.urls")),
+    path("api/supabase/", include("configs.urls")),  # Supabase integration endpoints
 ]

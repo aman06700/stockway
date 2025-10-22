@@ -27,9 +27,7 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     # Related entities
-    order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="payments"
-    )
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="payments")
     warehouse = models.ForeignKey(
         Warehouse, on_delete=models.CASCADE, related_name="transactions"
     )
@@ -37,7 +35,7 @@ class Payment(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="payments_made",
-        help_text="User making the payment (shopkeeper or warehouse admin)"
+        help_text="User making the payment (shopkeeper or warehouse admin)",
     )
     payee = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -45,7 +43,7 @@ class Payment(models.Model):
         related_name="payments_received",
         null=True,
         blank=True,
-        help_text="User receiving the payment (warehouse admin or rider)"
+        help_text="User receiving the payment (warehouse admin or rider)",
     )
     rider = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -53,21 +51,28 @@ class Payment(models.Model):
         related_name="rider_payouts",
         null=True,
         blank=True,
-        help_text="Rider receiving payout (only for warehouse_to_rider payments)"
+        help_text="Rider receiving payout (only for warehouse_to_rider payments)",
     )
 
     # Payment metadata
     transaction_id = models.CharField(
-        max_length=255, blank=True, unique=True, null=True,
-        help_text="External payment gateway reference or internal transaction ID"
+        max_length=255,
+        blank=True,
+        unique=True,
+        null=True,
+        help_text="External payment gateway reference or internal transaction ID",
     )
     distance_km = models.DecimalField(
-        max_digits=6, decimal_places=2, null=True, blank=True,
-        help_text="Distance in kilometers for rider payout calculation"
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Distance in kilometers for rider payout calculation",
     )
     payment_method = models.CharField(
-        max_length=50, default="mock",
-        help_text="Payment method: mock, cash, card, upi, etc."
+        max_length=50,
+        default="mock",
+        help_text="Payment method: mock, cash, card, upi, etc.",
     )
     notes = models.TextField(blank=True, help_text="Additional transaction notes")
 
@@ -92,5 +97,6 @@ class Payment(models.Model):
         # Generate transaction ID if not provided
         if not self.transaction_id:
             import uuid
+
             self.transaction_id = f"TXN-{uuid.uuid4().hex[:12].upper()}"
         super().save(*args, **kwargs)

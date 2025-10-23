@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",  # PostGIS support
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
@@ -86,7 +87,7 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.contrib.gis.db.backends.postgis",  # PostGIS-enabled backend
         "NAME": Config.DB_NAME,
         "USER": Config.DB_USER,
         "PASSWORD": Config.DB_PASSWORD,
@@ -173,7 +174,7 @@ USE_SUPABASE_DB = Config.SUPABASE_DB_HOST is not None
 if USE_SUPABASE_DB:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
+            "ENGINE": "django.contrib.gis.db.backends.postgis",  # PostGIS-enabled backend
             "NAME": Config.SUPABASE_DB_NAME,
             "USER": Config.SUPABASE_DB_USER,
             "PASSWORD": Config.SUPABASE_DB_PASSWORD,

@@ -1,5 +1,10 @@
 from django.urls import path
-from .views import RequestOTP, VerifyOTP, ShopkeeperProfileView, CustomerProfileUpdateView
+from .views import (
+    RequestOTP,
+    VerifyOTP,
+    ShopkeeperProfileView,
+    CustomerProfileUpdateView,
+)
 
 urlpatterns = [
     path("request-otp/", RequestOTP.as_view(), name="request-otp"),

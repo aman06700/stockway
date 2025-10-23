@@ -220,7 +220,9 @@ class CustomerProfileUpdateView(APIView):
 
         # Partial update
         serializer = ShopkeeperProfileSerializer(
-            profile, data=request.data, partial=True  # Allow partial updates
+            profile,
+            data=request.data,
+            partial=True,  # Allow partial updates
         )
 
         if serializer.is_valid():
@@ -262,4 +264,3 @@ class CustomerProfileUpdateView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-

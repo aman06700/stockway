@@ -70,18 +70,22 @@ class ShopkeeperProfile(models.Model):
         on_delete=models.CASCADE,
         related_name="shopkeeper_profile",
     )
-    shop_name = models.CharField(max_length=255, blank=True, default='')
-    address = models.TextField(blank=True, default='')
+    shop_name = models.CharField(max_length=255, blank=True, default="")
+    address = models.TextField(blank=True, default="")
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
-    gst_number = models.CharField(max_length=50, blank=True, default='')
-    license_number = models.CharField(max_length=50, blank=True, default='')
+    gst_number = models.CharField(max_length=50, blank=True, default="")
+    license_number = models.CharField(max_length=50, blank=True, default="")
     onboarding_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
-        return self.shop_name if self.shop_name else f"Profile for {self.user.phone_number}"
+        return (
+            self.shop_name
+            if self.shop_name
+            else f"Profile for {self.user.phone_number}"
+        )
 
     def mark_onboarding_complete(self):
         """

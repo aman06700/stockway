@@ -35,3 +35,39 @@ class WarehouseSerializer(serializers.ModelSerializer):
         if value < -180 or value > 180:
             raise serializers.ValidationError("Longitude must be between -180 and 180.")
         return value
+
+
+class NearbyWarehouseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for warehouses with distance information.
+    Used for geospatial proximity queries.
+    """
+
+    distance_km = serializers.SerializerMethodField()
+    distance_m = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Warehouse
+        fields = [
+            "id",
+            "name",
+            "address",
+            "latitude",
+            "longitude",
+            "distance_km",
+            "distance_m",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
+
+    def get_distance_km(self, obj):
+        """Return distance in kilometers (rounded to 2 decimal places)."""
+        if hasattr(obj, "distance"):
+            return round(obj.distance.km, 2)
+        return None
+
+    def get_distance_m(self, obj):
+        """Return distance in meters (rounded to nearest meter)."""
+        if hasattr(obj, "distance"):
+            return round(obj.distance.m, 0)
+        return None

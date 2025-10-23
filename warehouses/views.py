@@ -4,9 +4,10 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import get_object_or_404
 
-from .serializers import WarehouseSerializer
+from .serializers import WarehouseSerializer, NearbyWarehouseSerializer
+from .geo_services import get_nearby_warehouses, validate_coordinates
 from inventory.serializers import ItemSerializer
-from configs.permissions import IsWarehouseAdmin, IsSuperAdmin
+from configs.permissions import IsWarehouseAdmin, IsSuperAdmin, IsShopkeeper
 from .models import Warehouse
 from .permissions import IsWarehouseOwnerOrSuperAdmin, HasWarehouseRole
 from orders.models import Order
@@ -270,3 +271,113 @@ class WarehouseOrderAssignView(APIView):
         order.save()
 
         return Response(OrderSerializer(order).data, status=status.HTTP_200_OK)
+
+
+class NearbyWarehousesView(APIView):
+    """
+    GET /api/customers/warehouses/nearby/
+
+    Find warehouses near a given GPS location.
+    Requires latitude and longitude as query parameters.
+    Only accessible to authenticated shopkeepers.
+    """
+
+    permission_classes = [IsAuthenticated, IsShopkeeper]
+
+    def get(self, request):
+        """
+        Get nearby warehouses based on customer's location.
+
+        Query Parameters:
+            lat (float): Latitude of customer location (required)
+            lon (float): Longitude of customer location (required)
+            radius (float): Search radius in kilometers (optional, default: 10)
+            limit (int): Maximum number of results (optional)
+
+        Returns:
+            200: List of nearby warehouses with distance information
+            400: Missing or invalid parameters
+
+        Example:
+            GET /api/customers/warehouses/nearby/?lat=28.7041&lon=77.1025&radius=15
+        """
+        # Get query parameters
+        lat = request.query_params.get("lat")
+        lon = request.query_params.get("lon")
+        radius = request.query_params.get("radius", 10)
+        limit = request.query_params.get("limit")
+
+        # Validate required parameters
+        if not lat or not lon:
+            return Response(
+                {
+                    "error": "Missing required parameters",
+                    "detail": "Both lat and lon query parameters are required",
+                    "example": "/api/customers/warehouses/nearby/?lat=28.7041&lon=77.1025",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate coordinates
+        is_valid, error_message = validate_coordinates(lat, lon)
+        if not is_valid:
+            return Response(
+                {"error": "Invalid coordinates", "detail": error_message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate radius
+        try:
+            radius = float(radius)
+            if radius <= 0 or radius > 1000:  # Max 1000km
+                raise ValueError("Radius must be between 0 and 1000 km")
+        except (ValueError, TypeError) as e:
+            return Response(
+                {"error": "Invalid radius", "detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate limit
+        if limit:
+            try:
+                limit = int(limit)
+                if limit <= 0 or limit > 100:  # Max 100 results
+                    raise ValueError("Limit must be between 1 and 100")
+            except (ValueError, TypeError) as e:
+                return Response(
+                    {"error": "Invalid limit", "detail": str(e)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # Get nearby warehouses
+        try:
+            warehouses = get_nearby_warehouses(
+                latitude=float(lat),
+                longitude=float(lon),
+                radius_km=radius,
+                limit=limit,
+            )
+
+            serializer = NearbyWarehouseSerializer(warehouses, many=True)
+
+            return Response(
+                {
+                    "count": len(serializer.data),
+                    "search_location": {
+                        "latitude": float(lat),
+                        "longitude": float(lon),
+                    },
+                    "search_radius_km": radius,
+                    "warehouses": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "error": "Failed to fetch nearby warehouses",
+                    "detail": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

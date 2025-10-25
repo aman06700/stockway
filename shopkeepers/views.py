@@ -12,7 +12,8 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import calendar
 
-from configs.permissions import IsShopkeeper
+from core.permissions import IsShopkeeper
+from core.services import NotificationService
 from .models import Notification, SupportTicket
 from .serializers import (
     OrderDetailSerializer,
@@ -37,12 +38,14 @@ from accounts.models import ShopkeeperProfile
 
 class StandardResultsSetPagination(PageNumberPagination):
     """Standard pagination class."""
+
     page_size = 20
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
 
 
 # ===== Order Management Views =====
+
 
 class ShopkeeperOrderCreateView(generics.CreateAPIView):
     """
@@ -57,6 +60,7 @@ class ShopkeeperOrderCreateView(generics.CreateAPIView):
         ]
     }
     """
+
     serializer_class = OrderCreateSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
@@ -74,12 +78,11 @@ class ShopkeeperOrderCreateView(generics.CreateAPIView):
             notification_type="general",
             title="Order Created",
             message=f"Your order #{order.id} has been created successfully.",
-            order=order
+            order=order,
         )
 
         return Response(
-            OrderDetailSerializer(order).data,
-            status=status.HTTP_201_CREATED
+            OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED
         )
 
 
@@ -90,26 +93,29 @@ class ShopkeeperOrderListView(generics.ListAPIView):
     GET /api/shopkeeper/orders/
     Query params: ?status=pending&ordering=-created_at
     """
+
     serializer_class = OrderDetailSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['created_at', 'updated_at', 'total_amount', 'status']
-    ordering = ['-created_at']
+    ordering_fields = ["created_at", "updated_at", "total_amount", "status"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
-        queryset = Order.objects.filter(
-            shopkeeper=self.request.user
-        ).select_related('warehouse', 'delivery', 'delivery__rider').prefetch_related('order_items__item')
+        queryset = (
+            Order.objects.filter(shopkeeper=self.request.user)
+            .select_related("warehouse", "delivery", "delivery__rider")
+            .prefetch_related("order_items__item")
+        )
 
         # Filter by status
-        status_filter = self.request.query_params.get('status')
+        status_filter = self.request.query_params.get("status")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
 
         # Filter by date range
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
+        start_date = self.request.query_params.get("start_date")
+        end_date = self.request.query_params.get("end_date")
         if start_date:
             queryset = queryset.filter(created_at__gte=start_date)
         if end_date:
@@ -124,13 +130,16 @@ class ShopkeeperOrderDetailView(generics.RetrieveAPIView):
 
     GET /api/shopkeeper/orders/<id>/
     """
+
     serializer_class = OrderDetailSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
     def get_queryset(self):
-        return Order.objects.filter(
-            shopkeeper=self.request.user
-        ).select_related('warehouse', 'delivery', 'delivery__rider').prefetch_related('order_items__item')
+        return (
+            Order.objects.filter(shopkeeper=self.request.user)
+            .select_related("warehouse", "delivery", "delivery__rider")
+            .prefetch_related("order_items__item")
+        )
 
 
 class ShopkeeperOrderUpdateView(generics.UpdateAPIView):
@@ -140,6 +149,7 @@ class ShopkeeperOrderUpdateView(generics.UpdateAPIView):
     PATCH /api/shopkeeper/orders/<id>/update/
     Body: {"status": "cancelled"}
     """
+
     serializer_class = OrderUpdateSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
@@ -158,7 +168,7 @@ class ShopkeeperOrderUpdateView(generics.UpdateAPIView):
             notification_type="order_cancelled",
             title="Order Cancelled",
             message=f"Your order #{instance.id} has been cancelled.",
-            order=instance
+            order=instance,
         )
 
         return Response(OrderDetailSerializer(instance).data)
@@ -170,17 +180,17 @@ class ShopkeeperOrderTrackingView(APIView):
 
     GET /api/shopkeeper/orders/<id>/tracking/
     """
+
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
     def get(self, request, pk):
         try:
             order = Order.objects.select_related(
-                'warehouse', 'delivery', 'delivery__rider'
+                "warehouse", "delivery", "delivery__rider"
             ).get(id=pk, shopkeeper=request.user)
         except Order.DoesNotExist:
             return Response(
-                {"error": "Order not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
         tracking_data = {
@@ -223,6 +233,7 @@ class ShopkeeperOrderTrackingView(APIView):
 
 # ===== Payment Records Views =====
 
+
 class ShopkeeperPaymentListView(generics.ListAPIView):
     """
     List payment transaction history.
@@ -230,27 +241,27 @@ class ShopkeeperPaymentListView(generics.ListAPIView):
     GET /api/shopkeeper/payments/
     Query params: ?status=completed&ordering=-created_at
     """
+
     serializer_class = PaymentRecordSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['created_at', 'amount', 'status']
-    ordering = ['-created_at']
+    ordering_fields = ["created_at", "amount", "status"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         queryset = Payment.objects.filter(
-            payer=self.request.user,
-            payment_type="shopkeeper_to_warehouse"
-        ).select_related('order', 'warehouse')
+            payer=self.request.user, payment_type="shopkeeper_to_warehouse"
+        ).select_related("order", "warehouse")
 
         # Filter by status
-        status_filter = self.request.query_params.get('status')
+        status_filter = self.request.query_params.get("status")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
 
         # Filter by date range
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
+        start_date = self.request.query_params.get("start_date")
+        end_date = self.request.query_params.get("end_date")
         if start_date:
             queryset = queryset.filter(created_at__gte=start_date)
         if end_date:
@@ -265,28 +276,28 @@ class ShopkeeperPaymentSummaryView(APIView):
 
     GET /api/shopkeeper/payments/summary/
     """
+
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
     def get(self, request):
         payments = Payment.objects.filter(
-            payer=request.user,
-            payment_type="shopkeeper_to_warehouse"
+            payer=request.user, payment_type="shopkeeper_to_warehouse"
         )
 
         summary = payments.aggregate(
-            total_paid=Sum('amount', filter=Q(status='completed')) or Decimal('0.00'),
-            total_pending=Sum('amount', filter=Q(status='pending')) or Decimal('0.00'),
-            total_failed=Sum('amount', filter=Q(status='failed')) or Decimal('0.00'),
-            pending_count=Count('id', filter=Q(status='pending')),
-            completed_count=Count('id', filter=Q(status='completed'))
+            total_paid=Sum("amount", filter=Q(status="completed")) or Decimal("0.00"),
+            total_pending=Sum("amount", filter=Q(status="pending")) or Decimal("0.00"),
+            total_failed=Sum("amount", filter=Q(status="failed")) or Decimal("0.00"),
+            pending_count=Count("id", filter=Q(status="pending")),
+            completed_count=Count("id", filter=Q(status="completed")),
         )
 
         response_data = {
-            "total_paid": summary['total_paid'] or Decimal('0.00'),
-            "total_pending": summary['total_pending'] or Decimal('0.00'),
-            "total_failed": summary['total_failed'] or Decimal('0.00'),
-            "pending_orders_count": summary['pending_count'],
-            "completed_payments_count": summary['completed_count'],
+            "total_paid": summary["total_paid"] or Decimal("0.00"),
+            "total_pending": summary["total_pending"] or Decimal("0.00"),
+            "total_failed": summary["total_failed"] or Decimal("0.00"),
+            "pending_orders_count": summary["pending_count"],
+            "completed_payments_count": summary["completed_count"],
         }
 
         serializer = PaymentSummarySerializer(response_data)
@@ -295,6 +306,7 @@ class ShopkeeperPaymentSummaryView(APIView):
 
 # ===== Inventory Browsing Views =====
 
+
 class ShopkeeperInventoryBrowseView(generics.ListAPIView):
     """
     Browse inventory from nearby warehouses with filters.
@@ -302,33 +314,34 @@ class ShopkeeperInventoryBrowseView(generics.ListAPIView):
     GET /api/shopkeeper/inventory/browse/
     Query params: ?warehouse=<id>&search=<name>&min_price=<price>&max_price=<price>&in_stock=true
     """
+
     serializer_class = InventoryItemSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name', 'description', 'sku']
-    ordering_fields = ['name', 'price', 'quantity', 'created_at']
-    ordering = ['name']
+    search_fields = ["name", "description", "sku"]
+    ordering_fields = ["name", "price", "quantity", "created_at"]
+    ordering = ["name"]
 
     def get_queryset(self):
-        queryset = Item.objects.select_related('warehouse').all()
+        queryset = Item.objects.select_related("warehouse").all()
 
         # Filter by warehouse
-        warehouse_id = self.request.query_params.get('warehouse')
+        warehouse_id = self.request.query_params.get("warehouse")
         if warehouse_id:
             queryset = queryset.filter(warehouse_id=warehouse_id)
 
         # Filter by price range
-        min_price = self.request.query_params.get('min_price')
-        max_price = self.request.query_params.get('max_price')
+        min_price = self.request.query_params.get("min_price")
+        max_price = self.request.query_params.get("max_price")
         if min_price:
             queryset = queryset.filter(price__gte=min_price)
         if max_price:
             queryset = queryset.filter(price__lte=max_price)
 
         # Filter by stock availability
-        in_stock = self.request.query_params.get('in_stock')
-        if in_stock and in_stock.lower() == 'true':
+        in_stock = self.request.query_params.get("in_stock")
+        if in_stock and in_stock.lower() == "true":
             queryset = queryset.filter(quantity__gt=0)
 
         return queryset
@@ -341,6 +354,7 @@ class ShopkeeperNearbyWarehousesView(APIView):
     GET /api/shopkeeper/warehouses/nearby/
     Query params: ?radius=10 (in kilometers)
     """
+
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
     def get(self, request):
@@ -349,44 +363,48 @@ class ShopkeeperNearbyWarehousesView(APIView):
         except ShopkeeperProfile.DoesNotExist:
             return Response(
                 {"error": "Shopkeeper profile not found. Please complete onboarding."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if not profile.location:
             return Response(
-                {"error": "Location not set. Please update your profile with location."},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "error": "Location not set. Please update your profile with location."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Get radius from query params (default 10km)
-        radius = float(request.query_params.get('radius', 10))
+        radius = float(request.query_params.get("radius", 10))
 
         # Find nearby warehouses using PostGIS
-        nearby_warehouses = Warehouse.objects.filter(
-            location__distance_lte=(profile.location, Distance(km=radius))
-        ).annotate(
-            distance=Distance('location', profile.location)
-        ).order_by('distance')
+        nearby_warehouses = (
+            Warehouse.objects.filter(
+                location__distance_lte=(profile.location, Distance(km=radius))
+            )
+            .annotate(distance=Distance("location", profile.location))
+            .order_by("distance")
+        )
 
         warehouses_data = [
             {
                 "id": w.id,
                 "name": w.name,
                 "address": w.address,
-                "distance_km": round(w.distance.km, 2) if hasattr(w, 'distance') else None,
+                "distance_km": round(w.distance.km, 2)
+                if hasattr(w, "distance")
+                else None,
                 "latitude": float(w.latitude) if w.latitude else None,
                 "longitude": float(w.longitude) if w.longitude else None,
             }
             for w in nearby_warehouses
         ]
 
-        return Response(
-            {"warehouses": warehouses_data},
-            status=status.HTTP_200_OK
-        )
+        return Response({"warehouses": warehouses_data}, status=status.HTTP_200_OK)
 
 
 # ===== Notification Views =====
+
 
 class ShopkeeperNotificationListView(generics.ListAPIView):
     """
@@ -395,18 +413,19 @@ class ShopkeeperNotificationListView(generics.ListAPIView):
     GET /api/shopkeeper/notifications/
     Query params: ?is_read=false
     """
+
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
     pagination_class = StandardResultsSetPagination
-    ordering = ['-created_at']
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         queryset = Notification.objects.filter(user=self.request.user)
 
         # Filter by read status
-        is_read = self.request.query_params.get('is_read')
+        is_read = self.request.query_params.get("is_read")
         if is_read is not None:
-            queryset = queryset.filter(is_read=is_read.lower() == 'true')
+            queryset = queryset.filter(is_read=is_read.lower() == "true")
 
         return queryset
 
@@ -418,31 +437,29 @@ class ShopkeeperNotificationMarkReadView(APIView):
     POST /api/shopkeeper/notifications/mark-read/
     Body: {"notification_ids": [1, 2, 3]} or {} to mark all as read
     """
+
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
     def post(self, request):
         serializer = NotificationMarkReadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        notification_ids = serializer.validated_data.get('notification_ids')
+        notification_ids = serializer.validated_data.get("notification_ids")
 
         if notification_ids:
             # Mark specific notifications as read
             updated_count = Notification.objects.filter(
-                user=request.user,
-                id__in=notification_ids,
-                is_read=False
+                user=request.user, id__in=notification_ids, is_read=False
             ).update(is_read=True)
         else:
             # Mark all unread notifications as read
             updated_count = Notification.objects.filter(
-                user=request.user,
-                is_read=False
+                user=request.user, is_read=False
             ).update(is_read=True)
 
         return Response(
             {"message": f"{updated_count} notification(s) marked as read."},
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 
@@ -452,21 +469,19 @@ class ShopkeeperNotificationUnreadCountView(APIView):
 
     GET /api/shopkeeper/notifications/unread-count/
     """
+
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
     def get(self, request):
         unread_count = Notification.objects.filter(
-            user=request.user,
-            is_read=False
+            user=request.user, is_read=False
         ).count()
 
-        return Response(
-            {"unread_count": unread_count},
-            status=status.HTTP_200_OK
-        )
+        return Response({"unread_count": unread_count}, status=status.HTTP_200_OK)
 
 
 # ===== Support/Feedback Views =====
+
 
 class ShopkeeperSupportTicketListView(generics.ListAPIView):
     """
@@ -475,21 +490,22 @@ class ShopkeeperSupportTicketListView(generics.ListAPIView):
     GET /api/shopkeeper/support/tickets/
     Query params: ?status=open&category=order_issue
     """
+
     serializer_class = SupportTicketSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
     pagination_class = StandardResultsSetPagination
-    ordering = ['-created_at']
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         queryset = SupportTicket.objects.filter(user=self.request.user)
 
         # Filter by status
-        status_filter = self.request.query_params.get('status')
+        status_filter = self.request.query_params.get("status")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
 
         # Filter by category
-        category_filter = self.request.query_params.get('category')
+        category_filter = self.request.query_params.get("category")
         if category_filter:
             queryset = queryset.filter(category=category_filter)
 
@@ -508,6 +524,7 @@ class ShopkeeperSupportTicketCreateView(generics.CreateAPIView):
         "order": <order_id> (optional)
     }
     """
+
     serializer_class = SupportTicketCreateSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
@@ -521,6 +538,7 @@ class ShopkeeperSupportTicketDetailView(generics.RetrieveAPIView):
 
     GET /api/shopkeeper/support/tickets/<id>/
     """
+
     serializer_class = SupportTicketSerializer
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
@@ -530,6 +548,7 @@ class ShopkeeperSupportTicketDetailView(generics.RetrieveAPIView):
 
 # ===== Analytics Views =====
 
+
 class ShopkeeperAnalyticsView(APIView):
     """
     Get analytics summary with monthly breakdown.
@@ -537,23 +556,24 @@ class ShopkeeperAnalyticsView(APIView):
     GET /api/shopkeeper/analytics/
     Query params: ?months=6 (default 6 months)
     """
+
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
     def get(self, request):
         # Get number of months to analyze (default 6)
-        months_count = int(request.query_params.get('months', 6))
+        months_count = int(request.query_params.get("months", 6))
 
         # Get all orders for the shopkeeper
         orders = Order.objects.filter(shopkeeper=request.user)
 
         # Overall summary
         overall_stats = orders.aggregate(
-            total_orders=Count('id'),
-            total_spending=Sum('total_amount') or Decimal('0.00'),
-            pending_orders=Count('id', filter=Q(status='pending')),
-            completed_orders=Count('id', filter=Q(status='delivered')),
-            cancelled_orders=Count('id', filter=Q(status='cancelled')),
-            avg_order_value=Avg('total_amount') or Decimal('0.00'),
+            total_orders=Count("id"),
+            total_spending=Sum("total_amount") or Decimal("0.00"),
+            pending_orders=Count("id", filter=Q(status="pending")),
+            completed_orders=Count("id", filter=Q(status="delivered")),
+            cancelled_orders=Count("id", filter=Q(status="cancelled")),
+            avg_order_value=Avg("total_amount") or Decimal("0.00"),
         )
 
         # Monthly breakdown
@@ -568,39 +588,37 @@ class ShopkeeperAnalyticsView(APIView):
             month_name = calendar.month_name[month]
 
             # Filter orders for this month
-            month_orders = orders.filter(
-                created_at__year=year,
-                created_at__month=month
-            )
+            month_orders = orders.filter(created_at__year=year, created_at__month=month)
 
             month_stats = month_orders.aggregate(
-                total_orders=Count('id'),
-                completed_orders=Count('id', filter=Q(status='delivered')),
-                cancelled_orders=Count('id', filter=Q(status='cancelled')),
-                total_spending=Sum('total_amount') or Decimal('0.00'),
-                avg_order_value=Avg('total_amount') or Decimal('0.00'),
+                total_orders=Count("id"),
+                completed_orders=Count("id", filter=Q(status="delivered")),
+                cancelled_orders=Count("id", filter=Q(status="cancelled")),
+                total_spending=Sum("total_amount") or Decimal("0.00"),
+                avg_order_value=Avg("total_amount") or Decimal("0.00"),
             )
 
-            monthly_data.append({
-                "month": month_name,
-                "year": year,
-                "total_orders": month_stats['total_orders'],
-                "completed_orders": month_stats['completed_orders'],
-                "cancelled_orders": month_stats['cancelled_orders'],
-                "total_spending": month_stats['total_spending'],
-                "average_order_value": month_stats['avg_order_value'],
-            })
+            monthly_data.append(
+                {
+                    "month": month_name,
+                    "year": year,
+                    "total_orders": month_stats["total_orders"],
+                    "completed_orders": month_stats["completed_orders"],
+                    "cancelled_orders": month_stats["cancelled_orders"],
+                    "total_spending": month_stats["total_spending"],
+                    "average_order_value": month_stats["avg_order_value"],
+                }
+            )
 
         response_data = {
-            "total_orders": overall_stats['total_orders'],
-            "total_spending": overall_stats['total_spending'],
-            "pending_orders": overall_stats['pending_orders'],
-            "completed_orders": overall_stats['completed_orders'],
-            "cancelled_orders": overall_stats['cancelled_orders'],
-            "average_order_value": overall_stats['avg_order_value'],
+            "total_orders": overall_stats["total_orders"],
+            "total_spending": overall_stats["total_spending"],
+            "pending_orders": overall_stats["pending_orders"],
+            "completed_orders": overall_stats["completed_orders"],
+            "cancelled_orders": overall_stats["cancelled_orders"],
+            "average_order_value": overall_stats["avg_order_value"],
             "monthly_data": monthly_data,
         }
 
         serializer = AnalyticsSummarySerializer(response_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
-

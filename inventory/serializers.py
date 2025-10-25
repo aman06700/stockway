@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Item
-from configs.permissions import IsSuperAdmin
+from core.permissions import IsSuperAdmin
 
 
 class ItemSerializer(serializers.ModelSerializer):

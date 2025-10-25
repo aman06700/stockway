@@ -2,7 +2,7 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from .models import Order
 from .serializers import OrderCreateSerializer, OrderSerializer
-from configs.permissions import IsShopkeeper
+from core.permissions import IsShopkeeper
 
 
 class ShopkeeperOrderCreateAPIView(generics.CreateAPIView):

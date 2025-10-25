@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from configs.config import Config
+from core.config import Config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,14 +43,15 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "django_filters",
+    "core",  # Core utilities and shared code
+    "accounts",  # Authentication and user management
     "delivery",
     "orders",
     "payments",
     "inventory",
     "warehouses",
-    "accounts",
     "riders",
-    "shopkeepers",  # Shopkeeper module
+    "shopkeepers",
 ]
 
 MIDDLEWARE = [
@@ -144,8 +145,8 @@ AUTH_USER_MODEL = "accounts.User"
 # REST Framework Configuration
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "configs.supabase_auth.SupabaseAuthentication",  # Primary: Supabase JWT
-        "configs.supabase_auth.SupabaseTokenAuthentication",  # Fallback: Django Token
+        "core.authentication.SupabaseAuthentication",  # Primary: Supabase JWT
+        "core.authentication.SupabaseTokenAuthentication",  # Fallback: Django Token
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",

@@ -6,7 +6,7 @@ from rest_framework.generics import get_object_or_404
 from .serializers import WarehouseSerializer, NearbyWarehouseSerializer
 from .geo_services import get_nearby_warehouses, validate_coordinates
 from inventory.serializers import ItemSerializer
-from configs.permissions import IsWarehouseAdmin, IsSuperAdmin, IsShopkeeper
+from core.permissions import IsWarehouseAdmin, IsSuperAdmin, IsShopkeeper
 from .models import Warehouse
 from .permissions import IsWarehouseOwnerOrSuperAdmin, HasWarehouseRole
 from orders.models import Order

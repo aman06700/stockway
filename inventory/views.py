@@ -7,7 +7,7 @@ from .models import Item
 from .serializers import ItemSerializer
 from warehouses.models import Warehouse
 from warehouses.permissions import HasWarehouseRole, IsWarehouseOwnerOrSuperAdmin
-from configs.permissions import IsSuperAdmin
+from core.permissions import IsSuperAdmin
 
 
 class WarehouseScopedMixin:

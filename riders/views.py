@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .models import RiderProfile
 from .serializers import RiderProfileSerializer
-from configs.permissions import IsRider
+from core.permissions import IsRider
 from orders.models import Order
 from orders.serializers import OrderSerializer
 from delivery.models import Delivery

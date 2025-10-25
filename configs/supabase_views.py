@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
-from configs.config import Config
+from core.config import Config
 from configs.supabase_storage import (
     SupabaseStorage,
     upload_product_image,

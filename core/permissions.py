@@ -1,3 +1,8 @@
+"""
+Permission classes for role-based access control.
+Centralized permissions used across all domain apps.
+"""
+
 from rest_framework.permissions import BasePermission
 
 

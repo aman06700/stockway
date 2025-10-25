@@ -13,8 +13,8 @@ from .serializers import (
     OTPRequestSerializer,
     ShopkeeperProfileSerializer,
 )
-from configs.config import Config
-from configs.permissions import IsShopkeeper
+from core.config import Config
+from core.permissions import IsShopkeeper
 
 
 class RequestOTP(APIView):

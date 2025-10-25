@@ -1,3 +1,8 @@
+"""
+Configuration module for environment variables.
+Centralizes all configuration settings.
+"""
+
 from os import getenv
 from dotenv import load_dotenv
 

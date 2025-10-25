@@ -1,5 +1,5 @@
 from rest_framework.permissions import BasePermission
-from configs.permissions import IsWarehouseAdminOrSuperAdmin, IsSuperAdmin
+from core.permissions import IsWarehouseAdminOrSuperAdmin, IsSuperAdmin
 from .models import Warehouse
 
 

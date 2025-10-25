@@ -8,7 +8,7 @@ Supports product images, rider documents, and other media files.
 import mimetypes
 from typing import Optional, Dict, Any
 from supabase import create_client, Client
-from configs.config import Config
+from core.config import Config
 
 
 class SupabaseStorage:

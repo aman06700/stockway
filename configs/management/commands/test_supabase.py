@@ -7,7 +7,7 @@ Usage:
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from configs.config import Config
+from core.config import Config
 from configs.supabase_storage import SupabaseStorage
 import jwt
 from datetime import timedelta

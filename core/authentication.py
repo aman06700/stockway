@@ -8,7 +8,7 @@ It verifies Supabase JWT tokens and links them to Django User model via supabase
 import jwt
 from rest_framework import authentication, exceptions
 from django.contrib.auth import get_user_model
-from configs.config import Config
+from core.config import Config
 
 
 User = get_user_model()
@@ -129,3 +129,78 @@ class SupabaseTokenAuthentication(authentication.TokenAuthentication):
     """
 
     keyword: str = "Token"
+
+
+"""
+Permission classes for role-based access control.
+Centralized permissions used across all domain apps.
+"""
+from rest_framework.permissions import BasePermission
+
+
+class IsShopkeeper(BasePermission):
+    """
+    Allows access only to shopkeeper users.
+    """
+
+    def has_permission(self, request, view) -> bool:
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "SHOPKEEPER"
+        )
+
+
+class IsWarehouseAdmin(BasePermission):
+    """
+    Allows access only to warehouse admin users.
+    """
+
+    def has_permission(self, request, view) -> bool:
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "WAREHOUSE_ADMIN"
+        )
+
+
+class IsRider(BasePermission):
+    """
+    Allows access only to rider users.
+    """
+
+    def has_permission(self, request, view) -> bool:
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "RIDER"
+        )
+
+
+class IsSuperAdmin(BasePermission):
+    """
+    Allows access only to super admin users.
+    """
+
+    def has_permission(self, request, view) -> bool:
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "SUPER_ADMIN"
+        )
+
+
+class IsWarehouseAdminOrSuperAdmin(BasePermission):
+    """
+    Allows access only to warehouse admin or super admin users.
+    """
+
+    def has_permission(self, request, view) -> bool:
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and (
+                request.user.role == "WAREHOUSE_ADMIN"
+                or request.user.role == "SUPER_ADMIN"
+            )
+        )

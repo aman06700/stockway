@@ -90,10 +90,10 @@ class ShopkeeperProfile(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="shopkeeper_profile"
     )
-    shop_name = models.CharField(max_length=255, default='')
-    shop_address = models.TextField(default='')
+    shop_name = models.CharField(max_length=255, default="")
+    shop_address = models.TextField(default="")
     location = models.PointField(geography=True, null=True, blank=True)
-    gst_number = models.CharField(max_length=15, blank=True, default='')
+    gst_number = models.CharField(max_length=15, blank=True, default="")
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

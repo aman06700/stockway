@@ -6,4 +6,3 @@ from django.urls import path
 urlpatterns = [
     # Add inventory URLs here as needed
 ]
-

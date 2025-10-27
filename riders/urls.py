@@ -6,4 +6,3 @@ from django.urls import path
 urlpatterns = [
     # Add rider URLs here as needed
 ]
-

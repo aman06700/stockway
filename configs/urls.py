@@ -6,4 +6,3 @@ from django.urls import path
 urlpatterns = [
     # Add config URLs here as needed
 ]
-

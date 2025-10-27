@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/accounts/', include('accounts.urls')),
+    path("admin/", admin.site.urls),
+    path("api/accounts/", include("accounts.urls")),
     # Uncomment the lines below when you're ready to add these apps
     # path('api/inventory/', include('inventory.urls')),
     # path('api/orders/', include('orders.urls')),
@@ -12,4 +12,3 @@ urlpatterns = [
     # path('api/riders/', include('riders.urls')),
     # path('api/shopkeepers/', include('shopkeepers.urls')),
 ]
-

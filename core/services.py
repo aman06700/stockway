@@ -10,7 +10,9 @@ class NotificationService:
     """Service for handling notifications"""
 
     @staticmethod
-    def send_notification(user, title: str, message: str, notification_type: str = 'INFO'):
+    def send_notification(
+        user, title: str, message: str, notification_type: str = "INFO"
+    ):
         """
         Send notification to a user
 
@@ -28,7 +30,7 @@ class NotificationService:
                 user=user,
                 title=title,
                 message=message,
-                notification_type=notification_type
+                notification_type=notification_type,
             )
             logger.info(f"Notification sent to user {user.id}: {title}")
             return notification
@@ -37,7 +39,9 @@ class NotificationService:
             return None
 
     @staticmethod
-    def send_bulk_notification(users: List, title: str, message: str, notification_type: str = 'INFO'):
+    def send_bulk_notification(
+        users: List, title: str, message: str, notification_type: str = "INFO"
+    ):
         """
         Send notification to multiple users
 
@@ -55,7 +59,7 @@ class NotificationService:
                     user=user,
                     title=title,
                     message=message,
-                    notification_type=notification_type
+                    notification_type=notification_type,
                 )
                 for user in users
             ]
@@ -86,13 +90,16 @@ class InventoryService:
             from inventory.models import Item
 
             for item_data in items_data:
-                item_id = item_data.get('item_id')
-                quantity = item_data.get('quantity')
+                item_id = item_data.get("item_id")
+                quantity = item_data.get("quantity")
 
                 try:
                     item = Item.objects.get(id=item_id, warehouse=warehouse)
                     if item.quantity < quantity:
-                        return False, f"Insufficient stock for {item.name}. Available: {item.quantity}, Requested: {quantity}"
+                        return (
+                            False,
+                            f"Insufficient stock for {item.name}. Available: {item.quantity}, Requested: {quantity}",
+                        )
                 except Item.DoesNotExist:
                     return False, f"Item with ID {item_id} not found in this warehouse"
 
@@ -136,7 +143,7 @@ class InventoryService:
             from django.db.models import F
 
             item = Item.objects.get(id=item_id)
-            item.stock_quantity = F('stock_quantity') + quantity_change
+            item.stock_quantity = F("stock_quantity") + quantity_change
             item.save()
             item.refresh_from_db()
 

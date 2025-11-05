@@ -1,9 +1,25 @@
-from rest_framework.permissions import BasePermission
+"""
+Custom permission classes for role-based access control.
+"""
+from rest_framework import permissions
 
 
-class IsShopkeeper(BasePermission):
+class IsSuperAdmin(permissions.BasePermission):
     """
-    Permission class to check if user is a shopkeeper
+    Permission class to allow access only to super admins.
+    """
+
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and (request.user.is_superuser or request.user.role == "ADMIN")
+        )
+
+
+class IsShopkeeper(permissions.BasePermission):
+    """
+    Permission class to allow access only to shopkeepers.
     """
 
     def has_permission(self, request, view):
@@ -14,22 +30,9 @@ class IsShopkeeper(BasePermission):
         )
 
 
-class IsRider(BasePermission):
+class IsWarehouseAdmin(permissions.BasePermission):
     """
-    Permission class to check if user is a rider
-    """
-
-    def has_permission(self, request, view):
-        return (
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "RIDER"
-        )
-
-
-class IsWarehouseManager(BasePermission):
-    """
-    Permission class to check if user is a warehouse manager
+    Permission class to allow access only to warehouse managers/admins.
     """
 
     def has_permission(self, request, view):
@@ -40,14 +43,32 @@ class IsWarehouseManager(BasePermission):
         )
 
 
-class IsAdmin(BasePermission):
+class IsWarehouseAdminOrSuperAdmin(permissions.BasePermission):
     """
-    Permission class to check if user is an admin
+    Permission class to allow access to warehouse admins or super admins.
     """
 
     def has_permission(self, request, view):
         return (
             request.user
             and request.user.is_authenticated
-            and request.user.role == "ADMIN"
+            and (
+                request.user.is_superuser
+                or request.user.role == "ADMIN"
+                or request.user.role == "WAREHOUSE_MANAGER"
+            )
         )
+
+
+class IsRider(permissions.BasePermission):
+    """
+    Permission class to allow access only to riders.
+    """
+
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "RIDER"
+        )
+

@@ -1,59 +1,42 @@
 # Inventory App API Documentation
 
 ## Purpose
-- Manage inventory items for a specific warehouse.
+This app contains the core Item (inventory) models and business logic.
 
-## Base URLs
-- `/warehouse/<warehouse_id>/items/`
-- `/warehouse/<warehouse_id>/items/<item_id>/`
+## Current Implementation
+Currently, there are no dedicated inventory management endpoints in this module. Inventory browsing for shopkeepers is available through the Shopkeepers module.
 
-## Authentication
-- Token required: `Authorization: Token <token>`
-- Roles: `WAREHOUSE_ADMIN` for the warehouse or `SUPER_ADMIN`
+## Shopkeeper Inventory Endpoints
+For shopkeepers to browse inventory, see the Shopkeepers API documentation:
 
-## Endpoints
+- **GET** `/api/shopkeepers/inventory/browse/` - Browse items from warehouses with filters and search
 
-### 1. List & Create Items
-- **GET** `/warehouse/{warehouse_id}/items/`
-  - List items for the warehouse (most recent first)
-  - **Response 200 OK**: 
-    ```json
-    {
-      "count": ...,
-      "next": ...,
-      "previous": ...,
-      "results": [ { item fields... } ]
-    }
-    ```
-- **POST** `/warehouse/{warehouse_id}/items/`
-  - Create a new item in the warehouse
-  - **Request Body**:
-    ```json
-    {
-      "name": "Rice 5kg",
-      "description": "Premium",
-      "sku": "RICE-5KG",
-      "price": "100.00",
-      "quantity": 100
-    }
-    ```
-  - **Response 201 Created**: created item
+**Query Parameters:**
+- `warehouse` (optional): Filter by warehouse ID
+- `search` (optional): Search in name, description, or SKU
+- `min_price` (optional): Minimum price filter
+- `max_price` (optional): Maximum price filter
+- `in_stock` (optional): Filter only in-stock items (true/false)
+- `ordering` (optional): Sort by field (e.g., `name`, `price`, `-created_at`)
 
-### 2. Retrieve & Update Item
-- **GET** `/warehouse/{warehouse_id}/items/{item_id}/`
-  - Retrieve details for a single item
-- **PATCH** `/warehouse/{warehouse_id}/items/{item_id}/`
-- **PUT** `/warehouse/{warehouse_id}/items/{item_id}/`
-  - Update item (quantity, price, etc.)
+## Future Warehouse Admin Endpoints (Planned)
+The following endpoints may be implemented for warehouse administrators:
 
-## Item Schema (ItemSerializer)
+- **GET** `/api/warehouses/{warehouse_id}/items/` - List items for the warehouse
+- **POST** `/api/warehouses/{warehouse_id}/items/` - Create a new item
+- **GET** `/api/warehouses/{warehouse_id}/items/{item_id}/` - Retrieve item details
+- **PATCH** `/api/warehouses/{warehouse_id}/items/{item_id}/` - Update item (quantity, price, etc.)
+- **DELETE** `/api/warehouses/{warehouse_id}/items/{item_id}/` - Delete item
+
+## Item Schema
 - Fields: `id`, `warehouse`, `name`, `description`, `sku`, `price`, `quantity`, `available`, `created_at`, `updated_at`
-- Notes: quantity must be non-negative
+- Notes: 
+  - `quantity` must be non-negative
+  - `available` is a boolean indicating if item is available for purchase
+  - `sku` should be unique per warehouse
 
 ## Permissions
-- Object-level checks ensure only the owning warehouse admin (or super admin) can manage items.
-- Super admins may act on any warehouse.
+- Object-level checks ensure only the owning warehouse admin (or super admin) can manage items
+- Super admins may act on any warehouse
+- Shopkeepers can browse items but cannot modify them
 
-## Errors
-- 404 if warehouse not found or user lacks access
-- 400 on validation errors

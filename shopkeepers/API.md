@@ -2,7 +2,7 @@
 
 This document describes all the API endpoints available for the Shopkeeper (Customer) module.
 
-**Base URL:** `/shopkeeper/`
+**Base URL:** `/api/shopkeepers/`
 
 **Authentication:** All endpoints require authentication. Include the JWT token in the Authorization header:
 ```
@@ -27,7 +27,7 @@ Authorization: Bearer <your_jwt_token>
 ## Order Management
 
 ### 1. Create Order
-**POST** `/shopkeeper/orders/create/`
+**POST** `/api/shopkeepers/orders/create/`
 
 Create a new order from a warehouse.
 
@@ -77,7 +77,7 @@ Create a new order from a warehouse.
 ---
 
 ### 2. List Orders
-**GET** `/shopkeeper/orders/`
+**GET** `/api/shopkeepers/orders/`
 
 Get a paginated list of all orders.
 
@@ -89,13 +89,13 @@ Get a paginated list of all orders.
 - `page` (optional): Page number
 - `page_size` (optional): Items per page (default: 20, max: 100)
 
-**Example:** `/shopkeeper/orders/?status=pending&ordering=-created_at&page=1`
+**Example:** `/api/shopkeepers/orders/?status=pending&ordering=-created_at&page=1`
 
 **Response (200 OK):**
 ```json
 {
   "count": 25,
-  "next": "http://example.com/shopkeeper/orders/?page=2",
+  "next": "http://example.com/api/shopkeepers/orders/?page=2",
   "previous": null,
   "results": [
     {
@@ -118,7 +118,7 @@ Get a paginated list of all orders.
 ---
 
 ### 3. Get Order Details
-**GET** `/shopkeeper/orders/{id}/`
+**GET** `/api/shopkeepers/orders/{id}/`
 
 Get detailed information about a specific order.
 
@@ -155,7 +155,7 @@ Get detailed information about a specific order.
 ---
 
 ### 4. Update Order (Cancel)
-**PATCH** `/shopkeeper/orders/{id}/update/`
+**PATCH** `/api/shopkeepers/orders/{id}/update/`
 
 Cancel an order (only possible if status is pending or accepted).
 
@@ -181,7 +181,7 @@ Cancel an order (only possible if status is pending or accepted).
 ## Order Tracking
 
 ### 5. Track Order
-**GET** `/shopkeeper/orders/{id}/tracking/`
+**GET** `/api/shopkeepers/orders/{id}/tracking/`
 
 Get real-time tracking information for an order including delivery status and rider details.
 
@@ -218,7 +218,7 @@ Get real-time tracking information for an order including delivery status and ri
 ## Payment Records
 
 ### 6. List Payment Transactions
-**GET** `/shopkeeper/payments/`
+**GET** `/api/shopkeepers/payments/`
 
 Get a paginated list of all payment transactions.
 
@@ -258,7 +258,7 @@ Get a paginated list of all payment transactions.
 ---
 
 ### 7. Payment Summary
-**GET** `/shopkeeper/payments/summary/`
+**GET** `/api/shopkeepers/payments/summary/`
 
 Get a summary of all payments including pending dues.
 
@@ -278,7 +278,7 @@ Get a summary of all payments including pending dues.
 ## Inventory Browsing
 
 ### 8. Browse Inventory
-**GET** `/shopkeeper/inventory/browse/`
+**GET** `/api/shopkeepers/inventory/browse/`
 
 Browse products from warehouses with filters and search.
 
@@ -291,7 +291,7 @@ Browse products from warehouses with filters and search.
 - `ordering` (optional): Sort by field (e.g., `name`, `price`, `-created_at`)
 - `page`, `page_size`: Pagination parameters
 
-**Example:** `/shopkeeper/inventory/browse/?warehouse=1&search=rice&in_stock=true&ordering=price`
+**Example:** `/api/shopkeepers/inventory/browse/?warehouse=1&search=rice&in_stock=true&ordering=price`
 
 **Response (200 OK):**
 ```json
@@ -321,36 +321,57 @@ Browse products from warehouses with filters and search.
 ---
 
 ### 9. Nearby Warehouses
-**GET** `/shopkeeper/warehouses/nearby/`
+**GET** `/api/shopkeepers/warehouses/nearby/`
 
-Get warehouses near your location (requires location to be set in profile).
+Get warehouses near a specified GPS location ordered by proximity.
 
 **Query Parameters:**
-- `radius` (optional): Search radius in kilometers (default: 10)
+- `latitude` (required): User's GPS latitude coordinate (-90 to 90)
+- `longitude` (required): User's GPS longitude coordinate (-180 to 180)
+- `radius` (optional): Search radius in kilometers (default: 10, must be positive)
 
-**Example:** `/shopkeeper/warehouses/nearby/?radius=15`
+**Example:** `/api/shopkeepers/warehouses/nearby/?latitude=28.6139&longitude=77.2090&radius=15`
 
 **Response (200 OK):**
 ```json
 {
   "warehouses": [
     {
-      "id": 1,
+      "warehouse_id": 1,
       "name": "Main Warehouse",
       "address": "123 Main St, City",
-      "distance_km": 2.5,
-      "latitude": 28.6139,
-      "longitude": 77.2090
+      "distance_in_km": "2.50"
     },
     {
-      "id": 3,
+      "warehouse_id": 3,
       "name": "East Side Warehouse",
       "address": "456 East Ave, City",
-      "distance_km": 7.8,
-      "latitude": 28.6500,
-      "longitude": 77.2500
+      "distance_in_km": "7.80"
     }
   ]
+}
+```
+
+**Note:** Returns maximum 10 nearest warehouses within the specified radius.
+
+**Error Response (400 Bad Request - Missing Coordinates):**
+```json
+{
+  "error": "Missing coordinates. Both 'latitude' and 'longitude' query parameters are required."
+}
+```
+
+**Error Response (400 Bad Request - Invalid Coordinates):**
+```json
+{
+  "error": "Invalid coordinates. 'latitude' and 'longitude' must be valid numbers."
+}
+```
+
+**Error Response (400 Bad Request - Out of Range):**
+```json
+{
+  "error": "Invalid latitude. Latitude must be between -90 and 90 degrees."
 }
 ```
 
@@ -359,7 +380,7 @@ Get warehouses near your location (requires location to be set in profile).
 ## Notifications
 
 ### 10. List Notifications
-**GET** `/shopkeeper/notifications/`
+**GET** `/api/shopkeepers/notifications/`
 
 Get all notifications for the authenticated shopkeeper.
 
@@ -391,7 +412,7 @@ Get all notifications for the authenticated shopkeeper.
 ---
 
 ### 11. Mark Notifications as Read
-**POST** `/shopkeeper/notifications/mark-read/`
+**POST** `/api/shopkeepers/notifications/mark-read/`
 
 Mark one or more notifications as read.
 
@@ -417,7 +438,7 @@ Mark one or more notifications as read.
 ---
 
 ### 12. Unread Notification Count
-**GET** `/shopkeeper/notifications/unread-count/`
+**GET** `/api/shopkeepers/notifications/unread-count/`
 
 Get the count of unread notifications.
 
@@ -433,7 +454,7 @@ Get the count of unread notifications.
 ## Support & Feedback
 
 ### 13. List Support Tickets
-**GET** `/shopkeeper/support/tickets/`
+**GET** `/api/shopkeepers/support/tickets/`
 
 Get all support tickets created by the shopkeeper.
 
@@ -471,7 +492,7 @@ Get all support tickets created by the shopkeeper.
 ---
 
 ### 14. Create Support Ticket
-**POST** `/shopkeeper/support/tickets/create/`
+**POST** `/api/shopkeepers/support/tickets/create/`
 
 Create a new support ticket or submit feedback.
 
@@ -509,7 +530,7 @@ Create a new support ticket or submit feedback.
 ---
 
 ### 15. Get Support Ticket Details
-**GET** `/shopkeeper/support/tickets/{id}/`
+**GET** `/api/shopkeepers/support/tickets/{id}/`
 
 Get details of a specific support ticket.
 
@@ -537,14 +558,14 @@ Get details of a specific support ticket.
 ## Analytics
 
 ### 16. Analytics Summary
-**GET** `/shopkeeper/analytics/`
+**GET** `/api/shopkeepers/analytics/`
 
 Get comprehensive analytics including monthly breakdown of orders and spending.
 
 **Query Parameters:**
 - `months` (optional): Number of months to include (default: 6)
 
-**Example:** `/shopkeeper/analytics/?months=12`
+**Example:** `/api/shopkeepers/analytics/?months=12`
 
 **Response (200 OK):**
 ```json

@@ -346,56 +346,100 @@ class ShopkeeperInventoryBrowseView(generics.ListAPIView):
 
 class ShopkeeperNearbyWarehousesView(APIView):
     """
-    Get nearby warehouses based on shopkeeper location.
+    Get nearby warehouses based on user's GPS coordinates.
 
     GET /api/shopkeeper/warehouses/nearby/
-    Query params: ?radius=10 (in kilometers)
+    Query params:
+        - latitude (required): User's GPS latitude
+        - longitude (required): User's GPS longitude
+        - radius (optional): Search radius in kilometers (default: 10)
+
+    Returns top 10 nearest warehouses ordered by proximity.
     """
 
     permission_classes = [IsAuthenticated, IsShopkeeper]
 
     def get(self, request):
-        try:
-            profile = ShopkeeperProfile.objects.get(user=request.user)
-        except ShopkeeperProfile.DoesNotExist:
-            return Response(
-                {"error": "Shopkeeper profile not found. Please complete onboarding."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        from django.contrib.gis.geos import Point
 
-        if not profile.location:
+        # Get and validate coordinates from query parameters
+        latitude = request.query_params.get("latitude")
+        longitude = request.query_params.get("longitude")
+
+        # Validate coordinates are provided
+        if not latitude or not longitude:
             return Response(
                 {
-                    "error": "Location not set. Please update your profile with location."
+                    "error": "Missing coordinates. Both 'latitude' and 'longitude' query parameters are required."
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Get radius from query params (default 10km)
-        radius = float(request.query_params.get("radius", 10))
+        # Validate coordinates are valid numbers
+        try:
+            lat = float(latitude)
+            lon = float(longitude)
+        except (ValueError, TypeError):
+            return Response(
+                {
+                    "error": "Invalid coordinates. 'latitude' and 'longitude' must be valid numbers."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        # Find nearby warehouses using PostGIS
+        # Validate coordinate ranges
+        if not (-90 <= lat <= 90):
+            return Response(
+                {
+                    "error": "Invalid latitude. Latitude must be between -90 and 90 degrees."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not (-180 <= lon <= 180):
+            return Response(
+                {
+                    "error": "Invalid longitude. Longitude must be between -180 and 180 degrees."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Create Point from user coordinates (longitude, latitude order for PostGIS)
+        user_location = Point(lon, lat, srid=4326)
+
+        # Get radius from query params (default 10km)
+        try:
+            radius = float(request.query_params.get("radius", 10))
+            if radius <= 0:
+                raise ValueError("Radius must be positive")
+        except (ValueError, TypeError):
+            return Response(
+                {
+                    "error": "Invalid radius. Radius must be a positive number."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Find nearby warehouses using PostGIS ST_DistanceSphere
+        # DistanceFunc uses ST_DistanceSphere for geography fields
         nearby_warehouses = (
             Warehouse.objects.filter(
-                location__distance_lte=(profile.location, Distance(km=radius)),
                 location__isnull=False,
+                location__distance_lte=(user_location, Distance(km=radius))
             )
-            .annotate(distance=DistanceFunc("location", profile.location))
-            .order_by("distance")
+            .annotate(distance=DistanceFunc("location", user_location))
+            .order_by("distance")[:10]  # Limit to top 10 nearest
         )
 
+        # Format response with required fields
         warehouses_data = [
             {
-                "id": w.id,
-                "name": w.name,
-                "address": w.address,
-                "distance_km": round(w.distance.km, 2)
-                if hasattr(w, "distance")
-                else None,
-                "latitude": float(w.latitude) if w.latitude else None,
-                "longitude": float(w.longitude) if w.longitude else None,
+                "warehouse_id": warehouse.id,
+                "name": warehouse.name,
+                "address": warehouse.address,
+                "distance_in_km": f"{warehouse.distance.km:.2f}"
             }
-            for w in nearby_warehouses
+            for warehouse in nearby_warehouses
         ]
 
         return Response({"warehouses": warehouses_data}, status=status.HTTP_200_OK)

@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from django.contrib.auth import get_user_model
 from accounts.models import ShopkeeperProfile
 

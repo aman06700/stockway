@@ -1,6 +1,7 @@
 """
 Custom permission classes for role-based access control.
 """
+
 from rest_framework import permissions
 
 
@@ -71,4 +72,3 @@ class IsRider(permissions.BasePermission):
             and request.user.is_authenticated
             and request.user.role == "RIDER"
         )
-

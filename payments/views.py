@@ -16,6 +16,7 @@ from .serializers import (
     UpdatePaymentStatusSerializer,
 )
 from accounts.models import User
+from warehouses.models import WarehouseNotification
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
@@ -141,6 +142,16 @@ class PaymentViewSet(viewsets.ModelViewSet):
         payment.status = "completed"
         payment.completed_at = timezone.now()
         payment.save()
+
+        # Create notification for the warehouse
+        if payment.warehouse:
+            WarehouseNotification.objects.create(
+                warehouse=payment.warehouse,
+                notification_type="payment_received",
+                title=f"Payment Received for Order #{payment.order.id}",
+                message=f"Payment of {payment.amount} received from {payment.payer.full_name}.",
+                metadata={"payment_id": payment.id, "order_id": payment.order.id},
+            )
 
         return Response(PaymentSerializer(payment).data, status=status.HTTP_200_OK)
 

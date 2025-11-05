@@ -1,5 +1,3 @@
-from django.urls import path
-
 # Placeholder for riders URLs
 # Add your rider-specific endpoints here
 

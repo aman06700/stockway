@@ -1,8 +1,6 @@
 # Generated migration for ShopkeeperProfile field updates
 
 from django.db import migrations, models
-import django.contrib.gis.db.models.fields
-import django.utils.timezone
 
 
 class Migration(migrations.Migration):

@@ -1,280 +1,197 @@
-# Warehouses App API Documentation
+# Warehouse API Documentation
 
-## Purpose
-Manages warehouse data, provides location-based services for finding nearby warehouses, and handles warehouse-specific order management.
+## Overview
+
+The Warehouse API provides comprehensive warehouse management features including inventory control, order management, rider assignment, notifications, and analytics.
 
 ## Base URL
-`/api/warehouses/`
+
+```
+http://localhost:8000/api/warehouses/
+```
 
 ## Authentication
-- Bearer Token required: `Authorization: Bearer <access_token>`
-- Roles: 
-  - `WAREHOUSE_ADMIN` - Can manage their own warehouse and orders
-  - `SUPER_ADMIN` - Can manage all warehouses
-  - `SHOPKEEPER` - Can view nearby warehouses
 
----
+All endpoints require authentication. Include the authentication token in the request headers:
 
-## Warehouse Management Endpoints
-
-### 1. Warehouse Onboarding (Create Warehouse + Add Inventory)
-**POST** `/api/warehouses/onboarding/`
-
-Create a new warehouse and add initial inventory in a single request.
-
-**Authentication:** Warehouse Admin
-
-**Request Body:**
-```json
-{
-  "warehouse": {
-    "name": "Central Delhi Warehouse",
-    "address": "123 Connaught Place, New Delhi, Delhi 110001",
-    "latitude": 28.6129,
-    "longitude": 77.2295
-  },
-  "items": [
-    {
-      "name": "Rice Bag 5kg",
-      "description": "Premium Basmati Rice",
-      "sku": "RICE-5KG-001",
-      "price": 450.00,
-      "quantity": 500
-    },
-    {
-      "name": "Wheat Flour 10kg",
-      "description": "Whole Wheat Flour",
-      "sku": "WHEAT-10KG-001",
-      "price": 350.00,
-      "quantity": 300
-    }
-  ]
-}
+```
+Authorization: Bearer <your-token>
 ```
 
-**Response (201 Created):**
-```json
-{
-  "warehouse": {
-    "id": 1,
-    "name": "Central Delhi Warehouse",
-    "address": "123 Connaught Place, New Delhi, Delhi 110001",
-    "latitude": 28.6129,
-    "longitude": 77.2295,
-    "admin": 2,
-    "created_at": "2025-11-04T10:30:00Z",
-    "updated_at": "2025-11-04T10:30:00Z"
-  },
-  "items": [
-    {
-      "id": 1,
-      "warehouse": 1,
-      "name": "Rice Bag 5kg",
-      "description": "Premium Basmati Rice",
-      "sku": "RICE-5KG-001",
-      "price": "450.00",
-      "quantity": 500,
-      "available": true,
-      "created_at": "2025-11-04T10:30:00Z",
-      "updated_at": "2025-11-04T10:30:00Z"
-    }
-  ]
-}
+## Endpoints
+
+### 1. List Warehouses
+
+```http
+GET /api/warehouses/
 ```
 
-**Error Response (400 Bad Request):**
-```json
-{
-  "error": "Warehouse and items data are required"
-}
-```
+**Query Parameters:**
+- `is_active` (boolean): Filter by active status
+- `is_approved` (boolean): Filter by approval status
+- `search` (string): Search by name, address, or contact number
+- `ordering` (string): Sort by field (e.g., `-created_at`, `name`)
 
----
-
-### 2. Create Warehouse (Without Inventory)
-**POST** `/api/warehouses/create/`
-
-Create a new warehouse without adding inventory.
-
-**Authentication:** Warehouse Admin or Super Admin
-
-**Request Body:**
-```json
-{
-  "name": "South Delhi Warehouse",
-  "address": "456 Saket, New Delhi, Delhi 110017",
-  "latitude": 28.5245,
-  "longitude": 77.2066
-}
-```
-
-**Response (201 Created):**
-```json
-{
-  "id": 2,
-  "name": "South Delhi Warehouse",
-  "address": "456 Saket, New Delhi, Delhi 110017",
-  "latitude": 28.5245,
-  "longitude": 77.2066,
-  "admin": 2,
-  "created_at": "2025-11-04T10:35:00Z",
-  "updated_at": "2025-11-04T10:35:00Z"
-}
-```
-
----
-
-### 3. Get Warehouse Details
-**GET** `/api/warehouses/{id}/`
-
-Retrieve details of a specific warehouse.
-
-**Authentication:** Warehouse Admin (own warehouse), Super Admin (any warehouse)
-
-**Response (200 OK):**
-```json
-{
-  "id": 1,
-  "name": "Central Delhi Warehouse",
-  "address": "123 Connaught Place, New Delhi, Delhi 110001",
-  "latitude": 28.6129,
-  "longitude": 77.2295,
-  "admin": 2,
-  "created_at": "2025-11-04T10:30:00Z",
-  "updated_at": "2025-11-04T10:30:00Z"
-}
-```
-
----
-
-### 4. Update Warehouse (Partial)
-**PATCH** `/api/warehouses/{id}/`
-
-Update warehouse information (partial update).
-
-**Authentication:** Warehouse Admin (own warehouse), Super Admin (any warehouse)
-
-**Request Body:**
-```json
-{
-  "name": "Central Delhi Main Warehouse",
-  "address": "123 Connaught Place (Updated), New Delhi, Delhi 110001"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "id": 1,
-  "name": "Central Delhi Main Warehouse",
-  "address": "123 Connaught Place (Updated), New Delhi, Delhi 110001",
-  "latitude": 28.6129,
-  "longitude": 77.2295,
-  "admin": 2,
-  "created_at": "2025-11-04T10:30:00Z",
-  "updated_at": "2025-11-04T10:40:00Z"
-}
-```
-
----
-
-### 5. Update Warehouse (Full)
-**PUT** `/api/warehouses/{id}/`
-
-Update warehouse information (full update - all fields required).
-
-**Authentication:** Warehouse Admin (own warehouse), Super Admin (any warehouse)
-
-**Request Body:**
-```json
-{
-  "name": "Central Delhi Main Warehouse",
-  "address": "123 Connaught Place, New Delhi, Delhi 110001",
-  "latitude": 28.6129,
-  "longitude": 77.2295
-}
-```
-
----
-
-## Warehouse Order Management Endpoints
-
-### 6. List Warehouse Orders
-**GET** `/api/warehouses/{warehouse_id}/orders/`
-
-Get all orders for a specific warehouse.
-
-**Authentication:** Warehouse Admin
-
-**Response (200 OK):**
+**Response:**
 ```json
 [
   {
     "id": 1,
-    "shopkeeper": 3,
-    "warehouse": 1,
-    "status": "pending",
-    "total_amount": "1250.00",
-    "order_items": [
-      {
-        "id": 1,
-        "item": 5,
-        "item_name": "Rice Bag 5kg",
-        "quantity": 10,
-        "price": "100.00"
-      }
-    ],
-    "created_at": "2025-11-04T09:00:00Z",
-    "updated_at": "2025-11-04T09:00:00Z"
+    "name": "Main Warehouse",
+    "address": "123 Main St",
+    "contact_number": "+1234567890",
+    "latitude": 40.7128,
+    "longitude": -74.0060,
+    "is_active": true,
+    "is_approved": true,
+    "admin_email": "admin@example.com",
+    "admin_name": "John Doe",
+    "created_at": "2025-01-01T00:00:00Z"
   }
 ]
 ```
 
----
+### 2. Create Warehouse
 
-### 7. Confirm Order
-**POST** `/api/warehouses/{warehouse_id}/orders/{order_id}/confirm/`
+```http
+POST /api/warehouses/
+```
 
-Confirm/accept a pending order.
-
-**Authentication:** Warehouse Admin
-
-**Response (200 OK):**
+**Request Body:**
 ```json
 {
-  "id": 1,
-  "shopkeeper": 3,
-  "warehouse": 1,
-  "status": "accepted",
-  "total_amount": "1250.00",
-  "order_items": [...],
-  "created_at": "2025-11-04T09:00:00Z",
-  "updated_at": "2025-11-04T10:15:00Z"
+  "name": "New Warehouse",
+  "address": "456 Side St",
+  "contact_number": "+0987654321",
+  "latitude": 40.7580,
+  "longitude": -73.9855
 }
 ```
 
-**Error Response (400 Bad Request):**
+### 3. Get Warehouse Details
+
+```http
+GET /api/warehouses/{id}/
+```
+
+### 4. Update Warehouse
+
+```http
+PUT /api/warehouses/{id}/
+PATCH /api/warehouses/{id}/
+```
+
+### 5. Get Warehouse Inventory
+
+```http
+GET /api/warehouses/{id}/inventory/
+```
+
+**Query Parameters:**
+- `search` (string): Search by item name or SKU
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "warehouse": 1,
+    "warehouse_name": "Main Warehouse",
+    "name": "Product A",
+    "sku": "SKU001",
+    "description": "Description",
+    "price": "19.99",
+    "quantity": 100,
+    "created_at": "2025-01-01T00:00:00Z",
+    "updated_at": "2025-01-01T00:00:00Z"
+  }
+]
+```
+
+### 6. Bulk Update Inventory
+
+```http
+POST /api/warehouses/{id}/inventory/bulk-update/
+```
+
+**Request Body:**
 ```json
 {
-  "error": "Order cannot be confirmed."
+  "updates": [
+    {
+      "item_id": 1,
+      "quantity_change": 10
+    },
+    {
+      "item_id": 2,
+      "quantity_change": -5
+    }
+  ]
 }
 ```
 
-**Error Response (404 Not Found):**
+**Response:**
 ```json
 {
-  "error": "Order not found."
+  "message": "Bulk update completed",
+  "results": [
+    {
+      "item_id": 1,
+      "success": true,
+      "new_quantity": 110
+    },
+    {
+      "item_id": 2,
+      "success": true,
+      "new_quantity": 45
+    }
+  ]
 }
 ```
 
----
+### 7. List Warehouse Orders
 
-### 8. Assign Rider to Order
-**POST** `/api/warehouses/{warehouse_id}/orders/{order_id}/assign/`
+```http
+GET /api/warehouses/{id}/orders/
+```
 
-Assign a rider to an accepted order for delivery.
+**Query Parameters:**
+- `status` (string): Filter by order status
+- `from_date` (date): Filter orders from date (YYYY-MM-DD)
+- `to_date` (date): Filter orders to date (YYYY-MM-DD)
 
-**Authentication:** Warehouse Admin
+### 8. Get Order Details
+
+```http
+GET /api/warehouses/orders/{order_id}/
+```
+
+### 9. Accept/Reject Order
+
+```http
+POST /api/warehouses/orders/{order_id}/action/
+```
+
+**Request Body (Accept):**
+```json
+{
+  "action": "accept"
+}
+```
+
+**Request Body (Reject):**
+```json
+{
+  "action": "reject",
+  "rejection_reason": "Out of stock"
+}
+```
+
+### 10. Assign Rider to Order (Manual)
+
+```http
+POST /api/warehouses/orders/{order_id}/assign-rider/
+```
 
 **Request Body:**
 ```json
@@ -283,254 +200,236 @@ Assign a rider to an accepted order for delivery.
 }
 ```
 
-**Response (200 OK):**
-```json
-{
-  "id": 1,
-  "shopkeeper": 3,
-  "warehouse": 1,
-  "status": "in_transit",
-  "total_amount": "1250.00",
-  "order_items": [...],
-  "created_at": "2025-11-04T09:00:00Z",
-  "updated_at": "2025-11-04T10:20:00Z"
-}
+### 11. Auto-Assign Nearest Rider
+
+```http
+POST /api/warehouses/orders/{order_id}/auto-assign-rider/
 ```
 
-**Error Response (400 Bad Request - Order Not Accepted):**
-```json
-{
-  "error": "Order cannot be assigned."
-}
+This endpoint automatically finds and assigns the nearest available rider using PostGIS geographic queries.
+
+### 12. Track Deliveries
+
+```http
+GET /api/warehouses/{id}/deliveries/
 ```
-
-**Error Response (404 Not Found - Rider Not Found):**
-```json
-{
-  "error": "Rider not found."
-}
-```
-
-**Note:** The delivery fee is automatically calculated based on the distance between the shopkeeper's location and the warehouse using the Haversine formula (10 rupees per km).
-
----
-
-## Nearby Warehouse Discovery Endpoints
-
-### 9. Find Nearby Warehouses
-**GET** `/api/warehouses/nearby/`
-
-Find warehouses near a specified GPS location.
-
-**Authentication:** Shopkeeper
 
 **Query Parameters:**
-- `lat` (required): Latitude of customer location (-90 to 90)
-- `lon` (required): Longitude of customer location (-180 to 180)
-- `radius` (optional): Search radius in kilometers (default: 10, max: 1000)
-- `limit` (optional): Maximum number of results (max: 100)
+- `status` (string): Filter by status (default: "active" - shows assigned, picked_up, in_transit)
 
-**Example:**
-```
-/api/warehouses/nearby/?lat=28.6129&lon=77.2295&radius=15&limit=5
+### 13. Get Notifications
+
+```http
+GET /api/warehouses/{id}/notifications/
 ```
 
-**Response (200 OK):**
+**Query Parameters:**
+- `is_read` (boolean): Filter by read status
+- `type` (string): Filter by notification type (order, stock, general, payment, rider)
+
+**Response:**
 ```json
-{
-  "count": 3,
-  "search_location": {
-    "latitude": 28.6129,
-    "longitude": 77.2295
-  },
-  "search_radius_km": 15.0,
-  "warehouses": [
-    {
-      "id": 1,
-      "name": "Central Delhi Warehouse",
-      "address": "123 Connaught Place, New Delhi, Delhi 110001",
-      "latitude": 28.6129,
-      "longitude": 77.2295,
-      "distance_km": 0.0,
-      "distance_m": 0.0,
-      "created_at": "2025-11-04T10:30:00Z"
+[
+  {
+    "id": 1,
+    "warehouse": 1,
+    "notification_type": "stock",
+    "title": "Low Stock Alert",
+    "message": "Product A is running low (Current: 5)",
+    "is_read": false,
+    "metadata": {
+      "item_id": 1,
+      "sku": "SKU001",
+      "current_stock": 5,
+      "threshold": 10
     },
+    "created_at": "2025-01-01T00:00:00Z"
+  }
+]
+```
+
+### 14. Mark Notifications as Read
+
+```http
+POST /api/warehouses/{id}/notifications/mark-read/
+```
+
+**Request Body:**
+```json
+{
+  "notification_ids": [1, 2, 3]
+}
+```
+
+### 15. List Rider Payouts
+
+```http
+GET /api/warehouses/{id}/rider-payouts/
+```
+
+**Query Parameters:**
+- `status` (string): Filter by payout status (pending, processing, completed, failed)
+
+### 16. Analytics Summary
+
+```http
+GET /api/warehouses/{id}/analytics/summary/
+```
+
+**Query Parameters:**
+- `from_date` (date): Start date for analytics (YYYY-MM-DD)
+- `to_date` (date): End date for analytics (YYYY-MM-DD)
+
+**Response:**
+```json
+{
+  "total_orders": 150,
+  "completed_orders": 120,
+  "pending_orders": 10,
+  "total_revenue": "15000.00",
+  "top_items": [
     {
-      "id": 3,
-      "name": "East Delhi Warehouse",
-      "address": "789 Laxmi Nagar, New Delhi, Delhi 110092",
-      "latitude": 28.6328,
-      "longitude": 77.2770,
-      "distance_km": 4.82,
-      "distance_m": 4820.0,
-      "created_at": "2025-11-04T11:00:00Z"
+      "name": "Product A",
+      "sku": "SKU001",
+      "quantity": 500
+    }
+  ],
+  "low_stock_items": [
+    {
+      "name": "Product B",
+      "sku": "SKU002",
+      "quantity": 5
     }
   ]
 }
 ```
 
-**Error Response (400 Bad Request - Missing Parameters):**
-```json
-{
-  "error": "Missing required parameters",
-  "detail": "Both lat and lon query parameters are required",
-  "example": "/api/customers/warehouses/nearby/?lat=28.7041&lon=77.1025"
-}
+### 17. Export Analytics
+
+```http
+GET /api/warehouses/{id}/analytics/export/
 ```
 
-**Error Response (400 Bad Request - Invalid Coordinates):**
+**Query Parameters:**
+- `format` (string): Export format - `json` or `csv` (default: json)
+- `from_date` (date): Start date (YYYY-MM-DD)
+- `to_date` (date): End date (YYYY-MM-DD)
+
+**CSV Response:**
+Downloads a CSV file with order data.
+
+**JSON Response:**
 ```json
 {
-  "error": "Invalid coordinates",
-  "detail": "Latitude must be a valid number between -90 and 90"
-}
-```
-
-**Error Response (400 Bad Request - Invalid Radius):**
-```json
-{
-  "error": "Invalid radius",
-  "detail": "Radius must be between 0 and 1000 km"
-}
-```
-
----
-
-### 10. Get Warehouses Based on Profile Location
-**GET** `/api/warehouses/proximity/`
-
-Get the 5 nearest warehouses based on the authenticated shopkeeper's profile location.
-
-**Authentication:** Shopkeeper (must have ShopkeeperProfile with location set)
-
-**Response (200 OK):**
-```json
-{
-  "warehouses": [
+  "warehouse_id": 1,
+  "warehouse_name": "Main Warehouse",
+  "orders": [
     {
       "id": 1,
-      "name": "Central Delhi Warehouse",
-      "address": "123 Connaught Place, New Delhi, Delhi 110001",
-      "latitude": 28.6129,
-      "longitude": 77.2295,
-      "distance_km": 2.45,
-      "distance_m": 2450.0,
-      "created_at": "2025-11-04T10:30:00Z"
+      "status": "delivered",
+      "total_amount": "100.00",
+      "created_at": "2025-01-01T00:00:00Z",
+      "shopkeeper_email": "shop@example.com",
+      "rider_email": "rider@example.com"
     }
   ]
 }
 ```
-
-**Error Response (400 Bad Request):**
-```json
-{
-  "error": "Customer location not set or invalid"
-}
-```
-
----
-
-## Warehouse Schema
-
-### Warehouse Fields
-- `id` (integer, read-only): Unique identifier
-- `name` (string, required): Warehouse name
-- `address` (string, required): Full address
-- `latitude` (float, optional): GPS latitude (-90 to 90)
-- `longitude` (float, optional): GPS longitude (-180 to 180)
-- `admin` (integer, FK to User): Warehouse administrator
-- `created_at` (datetime, read-only): Creation timestamp
-- `updated_at` (datetime, read-only): Last update timestamp
-
-### Nearby Warehouse Response Fields
-- All warehouse fields above, plus:
-- `distance_km` (float): Distance in kilometers (rounded to 2 decimals)
-- `distance_m` (float): Distance in meters (rounded to nearest meter)
-
----
-
-## Order Statuses
-- `pending` - Order created, awaiting warehouse acceptance
-- `accepted` - Warehouse accepted the order
-- `rejected` - Warehouse rejected the order
-- `in_transit` - Order assigned to rider and being delivered
-- `delivered` - Order successfully delivered
-- `cancelled` - Order cancelled
-
----
-
-## Technical Notes
-
-### Geographic Features
-- Uses PostGIS for geographic data storage and queries
-- Distance calculations use `ST_DistanceSphere` for accurate results
-- Location stored as Point with SRID 4326 (WGS 84 coordinate system)
-- Coordinates stored as (longitude, latitude) per PostGIS convention
-
-### Delivery Fee Calculation
-- Calculated using Haversine formula
-- Distance measured between shopkeeper location and warehouse location
-- Rate: ₹10 per kilometer
-- Automatically created when rider is assigned to order
-
----
-
-## Permissions
-
-### Warehouse Management
-- **Create Warehouse:** WAREHOUSE_ADMIN or SUPER_ADMIN
-- **View Warehouse:** Warehouse owner (WAREHOUSE_ADMIN) or SUPER_ADMIN
-- **Update Warehouse:** Warehouse owner (WAREHOUSE_ADMIN) or SUPER_ADMIN
-- **Super Admin Note:** Can manage any warehouse and specify admin user
-
-### Order Management
-- **List Orders:** WAREHOUSE_ADMIN (own warehouse only)
-- **Confirm Orders:** WAREHOUSE_ADMIN (own warehouse only)
-- **Assign Riders:** WAREHOUSE_ADMIN (own warehouse only)
-
-### Warehouse Discovery
-- **Find Nearby:** SHOPKEEPER role
-- **Profile-based Search:** SHOPKEEPER role with location set
-
----
 
 ## Error Responses
 
-### 400 Bad Request
+All endpoints return standard HTTP status codes and JSON error messages:
+
 ```json
 {
-  "latitude": ["Latitude must be between -90 and 90."],
-  "longitude": ["Longitude must be between -180 and 180."]
+  "error": "Error description"
 }
 ```
 
-### 401 Unauthorized
-```json
-{
-  "detail": "Authentication credentials were not provided."
-}
+**Common Status Codes:**
+- `200 OK`: Success
+- `201 Created`: Resource created successfully
+- `400 Bad Request`: Invalid request data
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Permission denied
+- `404 Not Found`: Resource not found
+- `500 Internal Server Error`: Server error
+
+## Geographic Features
+
+The warehouse system uses PostGIS for geographic calculations:
+
+- **Auto-Rider Assignment**: Finds the nearest available rider within 50km
+- **Distance Calculation**: Accurate distance-based payout calculations
+- **Location-Based Queries**: Filter and sort by geographic proximity
+
+## Permissions
+
+- **Admin**: Full access to all warehouses
+- **Warehouse Manager**: Access only to own warehouses
+- **Shopkeeper**: View active/approved warehouses, place orders
+- **Rider**: View assigned deliveries
+
+## Examples
+
+### Using cURL
+
+```bash
+# List warehouses
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:8000/api/warehouses/
+
+# Create warehouse
+curl -X POST \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"New Warehouse","address":"123 St","contact_number":"+123","latitude":40.7,"longitude":-74}' \
+  http://localhost:8000/api/warehouses/
+
+# Auto-assign rider
+curl -X POST \
+  -H "Authorization: Bearer <token>" \
+  http://localhost:8000/api/warehouses/orders/5/auto-assign-rider/
 ```
 
-### 403 Forbidden
-```json
-{
-  "detail": "You do not have permission to perform this action."
+### Using Python requests
+
+```python
+import requests
+
+headers = {"Authorization": "Bearer <your-token>"}
+base_url = "http://localhost:8000/api/warehouses/"
+
+# Get warehouses
+response = requests.get(base_url, headers=headers)
+warehouses = response.json()
+
+# Bulk update inventory
+data = {
+    "updates": [
+        {"item_id": 1, "quantity_change": 10},
+        {"item_id": 2, "quantity_change": -5}
+    ]
 }
+response = requests.post(
+    f"{base_url}1/inventory/bulk-update/",
+    headers=headers,
+    json=data
+)
 ```
 
-### 404 Not Found
-```json
-{
-  "detail": "Not found."
-}
+## Testing
+
+Run the test script to verify endpoints:
+
+```bash
+python test_warehouse_api.py
 ```
 
----
+## Notes
 
-## See Also
-- `WAREHOUSE_POSTMAN_GUIDE.md` - Complete Postman testing guide with examples
-- `shopkeepers/API.md` - Shopkeeper endpoints documentation
-- `inventory/API.md` - Inventory management documentation
-
-
+- All datetime fields are in ISO 8601 format with UTC timezone
+- Pagination is available on list endpoints (use `?page=2`)
+- All decimal fields (prices, amounts) are returned as strings to preserve precision
+- Geographic coordinates use WGS84 (SRID 4326)
 

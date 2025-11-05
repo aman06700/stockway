@@ -237,7 +237,7 @@ class SupabaseService:
         """
         try:
             client = cls.get_client()
-            logger.debug(f"Attempting to sign out user")
+            logger.debug("Attempting to sign out user")
 
             # Set the session with the access token
             client.auth.set_session(access_token, access_token)
@@ -261,10 +261,10 @@ class SupabaseService:
         """
         try:
             client = cls.get_client()
-            logger.debug(f"Attempting to get user from access token")
+            logger.debug("Attempting to get user from access token")
 
             response = client.auth.get_user(access_token)
-            logger.debug(f"Successfully retrieved user data")
+            logger.debug("Successfully retrieved user data")
             return response
         except Exception as e:
             logger.error(f"Failed to get user: {str(e)}", exc_info=True)

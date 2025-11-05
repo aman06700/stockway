@@ -30,7 +30,6 @@ from orders.models import Order
 from payments.models import Payment
 from inventory.models import Item
 from warehouses.models import Warehouse
-from accounts.models import ShopkeeperProfile
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -414,9 +413,7 @@ class ShopkeeperNearbyWarehousesView(APIView):
                 raise ValueError("Radius must be positive")
         except (ValueError, TypeError):
             return Response(
-                {
-                    "error": "Invalid radius. Radius must be a positive number."
-                },
+                {"error": "Invalid radius. Radius must be a positive number."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -425,7 +422,7 @@ class ShopkeeperNearbyWarehousesView(APIView):
         nearby_warehouses = (
             Warehouse.objects.filter(
                 location__isnull=False,
-                location__distance_lte=(user_location, Distance(km=radius))
+                location__distance_lte=(user_location, Distance(km=radius)),
             )
             .annotate(distance=DistanceFunc("location", user_location))
             .order_by("distance")[:10]  # Limit to top 10 nearest
@@ -437,7 +434,7 @@ class ShopkeeperNearbyWarehousesView(APIView):
                 "warehouse_id": warehouse.id,
                 "name": warehouse.name,
                 "address": warehouse.address,
-                "distance_in_km": f"{warehouse.distance.km:.2f}"
+                "distance_in_km": f"{warehouse.distance.km:.2f}",
             }
             for warehouse in nearby_warehouses
         ]

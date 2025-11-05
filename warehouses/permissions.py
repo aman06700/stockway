@@ -1,27 +1,71 @@
-from rest_framework.permissions import BasePermission
-from core.permissions import IsWarehouseAdminOrSuperAdmin, IsSuperAdmin
-from .models import Warehouse
+from rest_framework import permissions
 
 
-class IsWarehouseOwnerOrSuperAdmin(BasePermission):
-    """
-    Object-level permission to only allow the warehouse's admin to view/update it,
-    unless the user is a SUPER_ADMIN.
-    """
-
-    def has_object_permission(self, request, view, obj: Warehouse):
-        if not request.user or not request.user.is_authenticated:
-            return False
-        if IsSuperAdmin().has_permission(request, view):
-            return True
-        # Only owner admin can access
-        return getattr(obj, "admin_id", None) == request.user.id
-
-
-class HasWarehouseRole(BasePermission):
-    """
-    Gate all warehouse endpoints to warehouse admins or super admins.
-    """
+class IsWarehouseAdmin(permissions.BasePermission):
+    """Permission for warehouse administrators"""
 
     def has_permission(self, request, view):
-        return IsWarehouseAdminOrSuperAdmin().has_permission(request, view)
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        # Admin can access all warehouses
+        if request.user.role == "admin":
+            return True
+
+        # Check if user is the warehouse admin
+        if hasattr(obj, "admin"):
+            return obj.admin == request.user
+
+        # For nested resources (e.g., inventory items)
+        if hasattr(obj, "warehouse"):
+            return obj.warehouse.admin == request.user
+
+        return False
+
+
+class IsWarehouseAdminOrReadOnly(permissions.BasePermission):
+    """Allow read access to all, write access to warehouse admin only"""
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        # Admin can modify all warehouses
+        if request.user.role == "admin":
+            return True
+
+        # Check if user is the warehouse admin
+        if hasattr(obj, "admin"):
+            return obj.admin == request.user
+
+        if hasattr(obj, "warehouse"):
+            return obj.warehouse.admin == request.user
+
+        return False
+
+
+class IsWarehouseOrRider(permissions.BasePermission):
+    """Permission for warehouse admin or assigned rider"""
+
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        # Admin can access all
+        if request.user.role == "admin":
+            return True
+
+        # Warehouse admin can access their orders
+        if hasattr(obj, "warehouse") and obj.warehouse.admin == request.user:
+            return True
+
+        # Rider can access assigned orders (read-only for most fields)
+        if hasattr(obj, "rider") and obj.rider and obj.rider.user == request.user:
+            return True
+
+        return False

@@ -1,65 +1,150 @@
-# warehouses/models.py
-from datetime import datetime
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
+from django.core.validators import MinValueValidator
+from django.db import models as django_models
 from decimal import Decimal
-from django.contrib.gis.db.models import PointField
-from django.db import models
-from django.contrib.gis.db import models as gis_models
-from django.conf import settings
 
 
 class Warehouse(models.Model):
-    """
-    Model to store warehouse information with PostGIS geospatial support.
-    """
+    """Warehouse profile with PostGIS location support"""
 
-    name: str = models.CharField(max_length=255)
-    address: str = models.TextField()
-
-    # PostGIS PointField for geospatial queries
-    location: PointField = gis_models.PointField(
-        geography=True,
-        srid=4326,
-        help_text="Geographic location (longitude, latitude)",
-        null=True,
-        blank=True,
+    admin = django_models.ForeignKey(
+        "accounts.User", on_delete=django_models.CASCADE, related_name="warehouses"
     )
-
-    # Keep legacy fields for backward compatibility during migration
-    latitude: Decimal = models.DecimalField(
-        max_digits=9, decimal_places=6, null=True, blank=True
-    )
-    longitude: Decimal = models.DecimalField(
-        max_digits=9, decimal_places=6, null=True, blank=True
-    )
-
-    admin = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="warehouses"
-    )
-    created_at: datetime = models.DateTimeField(auto_now_add=True)
-    updated_at: datetime = models.DateTimeField(auto_now=True)
+    name = django_models.CharField(max_length=255)
+    address = django_models.TextField()
+    contact_number = django_models.CharField(max_length=20)
+    location = models.PointField(
+        geography=True, srid=4326, null=True, blank=True
+    )  # PostGIS Point field
+    is_active = django_models.BooleanField(default=True)
+    is_approved = django_models.BooleanField(default=False)
+    created_at = django_models.DateTimeField(auto_now_add=True)
+    updated_at = django_models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = "warehouses"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["location"]),
+            django_models.Index(fields=["is_active", "is_approved"]),
+            django_models.Index(fields=["admin"]),
         ]
 
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.admin.email}"
 
-    def save(self, *args, **kwargs) -> None:
-        """
-        Auto-sync location PointField with latitude/longitude fields.
-        """
-        from django.contrib.gis.geos import Point
+    @property
+    def latitude(self):
+        return self.location.y if self.location else None
 
-        # If latitude and longitude are provided, update location
-        if self.latitude is not None and self.longitude is not None:
-            self.location = Point(
-                float(self.longitude), float(self.latitude), srid=4326
-            )
-        # If location is provided, update latitude and longitude
-        elif self.location:
-            self.longitude = self.location.x
-            self.latitude = self.location.y
+    @property
+    def longitude(self):
+        return self.location.x if self.location else None
 
+    def set_coordinates(self, latitude, longitude):
+        """Set location from lat/lng coordinates"""
+        self.location = Point(longitude, latitude, srid=4326)
+
+    def save(self, *args, **kwargs):
+        # Validate coordinates if location is set
+        if self.location:
+            lat, lng = self.location.y, self.location.x
+            if not (-90 <= lat <= 90):
+                raise ValueError("Latitude must be between -90 and 90")
+            if not (-180 <= lng <= 180):
+                raise ValueError("Longitude must be between -180 and 180")
+        super().save(*args, **kwargs)
+
+
+class WarehouseNotification(django_models.Model):
+    """Notifications for warehouse admins"""
+
+    NOTIFICATION_TYPES = [
+        ("order", "Order"),
+        ("stock", "Stock"),
+        ("general", "General"),
+        ("payment", "Payment"),
+        ("rider", "Rider"),
+    ]
+
+    warehouse = django_models.ForeignKey(
+        Warehouse, on_delete=django_models.CASCADE, related_name="notifications"
+    )
+    notification_type = django_models.CharField(
+        max_length=20, choices=NOTIFICATION_TYPES
+    )
+    title = django_models.CharField(max_length=255)
+    message = django_models.TextField()
+    is_read = django_models.BooleanField(default=False)
+    metadata = django_models.JSONField(default=dict, blank=True)
+    created_at = django_models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "warehouse_notifications"
+        ordering = ["-created_at"]
+        indexes = [
+            django_models.Index(fields=["warehouse", "is_read"]),
+            django_models.Index(fields=["notification_type"]),
+        ]
+
+    def __str__(self):
+        return f"{self.warehouse.name} - {self.title}"
+
+
+class RiderPayout(django_models.Model):
+    """Rider payment tracking for warehouses"""
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    ]
+
+    warehouse = django_models.ForeignKey(
+        Warehouse, on_delete=django_models.CASCADE, related_name="rider_payouts"
+    )
+    rider = django_models.ForeignKey(
+        "riders.RiderProfile", on_delete=django_models.CASCADE, related_name="payouts"
+    )
+    order = django_models.ForeignKey(
+        "orders.Order", on_delete=django_models.CASCADE, related_name="rider_payouts"
+    )
+    base_rate = django_models.DecimalField(
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+    )
+    distance_km = django_models.DecimalField(
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.00"))]
+    )
+    distance_rate = django_models.DecimalField(
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.00"))]
+    )
+    total_amount = django_models.DecimalField(
+        max_digits=10, decimal_places=2, editable=False
+    )
+    status = django_models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="pending"
+    )
+    payment_reference = django_models.CharField(max_length=255, blank=True)
+    created_at = django_models.DateTimeField(auto_now_add=True)
+    paid_at = django_models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "rider_payouts"
+        ordering = ["-created_at"]
+        indexes = [
+            django_models.Index(fields=["warehouse", "status"]),
+            django_models.Index(fields=["rider", "status"]),
+        ]
+
+    def __str__(self):
+        return f"Payout for {self.rider} - Order #{self.order_id}"
+
+    def calculate_total(self):
+        """Calculate total payout amount"""
+        return self.base_rate + (self.distance_km * self.distance_rate)
+
+    def save(self, *args, **kwargs):
+        # Auto-calculate total amount
+        self.total_amount = self.calculate_total()
         super().save(*args, **kwargs)

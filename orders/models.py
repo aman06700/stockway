@@ -34,6 +34,7 @@ class Order(models.Model):
     total_amount: Decimal = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00
     )
+    rejection_reason: str = models.TextField(blank=True, null=True)
     created_at: datetime = models.DateTimeField(auto_now_add=True)
     updated_at: datetime = models.DateTimeField(auto_now=True)
 

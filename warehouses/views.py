@@ -20,7 +20,7 @@ from inventory.models import Item
 from inventory.serializers import ItemSerializer
 from orders.models import Order
 from orders.serializers import OrderSerializer
-from riders.models import RiderProfile
+from riders.models import Rider
 from .geo_services import find_nearest_available_rider
 
 
@@ -246,7 +246,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
                 {"error": "rider_id is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        rider = get_object_or_404(RiderProfile, id=rider_id)
+        rider = get_object_or_404(Rider, id=rider_id)
 
         if order.status not in ["accepted", "pending"]:
             return Response(

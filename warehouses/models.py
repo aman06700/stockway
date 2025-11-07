@@ -105,7 +105,7 @@ class RiderPayout(django_models.Model):
         Warehouse, on_delete=django_models.CASCADE, related_name="rider_payouts"
     )
     rider = django_models.ForeignKey(
-        "riders.RiderProfile", on_delete=django_models.CASCADE, related_name="payouts"
+        "riders.Rider", on_delete=django_models.CASCADE, related_name="payouts"
     )
     order = django_models.ForeignKey(
         "orders.Order", on_delete=django_models.CASCADE, related_name="rider_payouts"

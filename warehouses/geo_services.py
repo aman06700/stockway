@@ -1,7 +1,7 @@
 from django.contrib.gis.db.models.functions import Distance
 from django.core.cache import cache
 from django.db.models import Q
-from riders.models import RiderProfile
+from riders.models import Rider
 from core.validators import GeoValidator
 import hashlib
 import logging
@@ -18,7 +18,7 @@ def find_nearest_available_rider(warehouse, max_distance_km=50):
         max_distance_km: Maximum distance in kilometers to search for riders
 
     Returns:
-        RiderProfile instance or None
+        Rider instance or None
     """
     if not warehouse.location:
         return None
@@ -29,20 +29,18 @@ def find_nearest_available_rider(warehouse, max_distance_km=50):
     # Convert km to meters for PostGIS distance calculation
     max_distance_m = max_distance_km * 1000
 
-    # Check if RiderProfile has location field
-    if not hasattr(RiderProfile, "location") and not hasattr(
-        RiderProfile, "current_location"
-    ):
+    # Check if Rider has location field
+    if not hasattr(Rider, "location") and not hasattr(Rider, "current_location"):
         return None
 
     location_field = (
-        "current_location" if hasattr(RiderProfile, "current_location") else "location"
+        "current_location" if hasattr(Rider, "current_location") else "location"
     )
 
     # Find available riders within max distance, ordered by distance
     try:
         nearest_rider = (
-            RiderProfile.objects.filter(**{f"{location_field}__isnull": False})
+            Rider.objects.filter(**{f"{location_field}__isnull": False})
             .annotate(distance=Distance(location_field, warehouse.location))
             .filter(distance__lte=max_distance_m)
             .order_by("distance")
@@ -87,10 +85,10 @@ def get_riders_within_radius(warehouse, radius_km=10):
         radius_km: Radius in kilometers
 
     Returns:
-        QuerySet of RiderProfile instances with distance annotation
+        QuerySet of Rider instances with distance annotation
     """
     if not warehouse.location:
-        return RiderProfile.objects.none()
+        return Rider.objects.none()
 
     # Validate and clamp radius
     is_valid, error_msg = GeoValidator.validate_radius(radius_km)
@@ -98,20 +96,18 @@ def get_riders_within_radius(warehouse, radius_km=10):
         logger.warning(f"Invalid radius: {error_msg}")
         radius_km = GeoValidator.clamp_radius(radius_km)
 
-    # Check if RiderProfile has location field
-    if not hasattr(RiderProfile, "location") and not hasattr(
-        RiderProfile, "current_location"
-    ):
-        return RiderProfile.objects.none()
+    # Check if Rider has location field
+    if not hasattr(Rider, "location") and not hasattr(Rider, "current_location"):
+        return Rider.objects.none()
 
     location_field = (
-        "current_location" if hasattr(RiderProfile, "current_location") else "location"
+        "current_location" if hasattr(Rider, "current_location") else "location"
     )
     radius_m = radius_km * 1000
 
     try:
         riders = (
-            RiderProfile.objects.filter(**{f"{location_field}__isnull": False})
+            Rider.objects.filter(**{f"{location_field}__isnull": False})
             .annotate(distance=Distance(location_field, warehouse.location))
             .filter(distance__lte=radius_m)
             .order_by("distance")
@@ -120,7 +116,7 @@ def get_riders_within_radius(warehouse, radius_km=10):
         return riders
     except Exception as e:
         logger.error(f"Error getting riders within radius: {e}", exc_info=True)
-        return RiderProfile.objects.none()
+        return Rider.objects.none()
 
 
 def find_nearby_warehouses_cached(latitude, longitude, radius_km=10):

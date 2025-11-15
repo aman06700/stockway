@@ -204,5 +204,3 @@ class RiderLocationHistory(django_models.Model):
 
     def __str__(self):
         return f"{self.rider.user.email} - {self.timestamp}"
-
-

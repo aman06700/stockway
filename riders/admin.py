@@ -181,4 +181,3 @@ class RiderLocationHistoryAdmin(GISModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related("rider", "rider__user")
-

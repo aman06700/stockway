@@ -11,6 +11,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     """
     Serializer for Payment model with compact JSON response.
     """
+
     payment_id = serializers.IntegerField(source="id", read_only=True)
     order_id = serializers.IntegerField(source="order.id", read_only=True)
     timestamp = serializers.DateTimeField(source="created_at", read_only=True)
@@ -32,6 +33,7 @@ class PaymentInitiateSerializer(serializers.Serializer):
     """
     Serializer for initiating payment by shopkeeper.
     """
+
     order_id = serializers.IntegerField()
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
     mode = serializers.ChoiceField(choices=["upi", "cash", "credit"])
@@ -54,11 +56,15 @@ class PaymentInitiateSerializer(serializers.Serializer):
         # Validate amount matches order total
         if amount != order.total_amount:
             raise serializers.ValidationError(
-                {"amount": f"Payment amount must equal order total: {order.total_amount}"}
+                {
+                    "amount": f"Payment amount must equal order total: {order.total_amount}"
+                }
             )
 
         # Check for existing payment
-        if Payment.objects.filter(order=order, payer=self.context["request"].user).exists():
+        if Payment.objects.filter(
+            order=order, payer=self.context["request"].user
+        ).exists():
             raise serializers.ValidationError(
                 {"order_id": "Payment already exists for this order."}
             )
@@ -70,6 +76,7 @@ class PaymentConfirmSerializer(serializers.Serializer):
     """
     Serializer for confirming or rejecting payment by warehouse admin.
     """
+
     payment_id = serializers.IntegerField()
     action = serializers.ChoiceField(choices=["confirm", "reject"])
 
@@ -86,6 +93,7 @@ class PayoutSerializer(serializers.ModelSerializer):
     """
     Serializer for Payout model with compact JSON response.
     """
+
     payout_id = serializers.IntegerField(source="id", read_only=True)
     rider_id = serializers.IntegerField(source="rider.id", read_only=True)
     warehouse_id = serializers.IntegerField(source="warehouse.id", read_only=True)
@@ -110,15 +118,15 @@ class PayoutProcessSerializer(serializers.Serializer):
     """
     Serializer for processing payouts for delivered orders.
     """
+
     order_ids = serializers.ListField(
         child=serializers.IntegerField(),
         required=False,
-        help_text="List of order IDs to process payouts for. If not provided, processes all delivered orders."
+        help_text="List of order IDs to process payouts for. If not provided, processes all delivered orders.",
     )
     rate_per_km = serializers.DecimalField(
         max_digits=6,
         decimal_places=2,
         default=Decimal("10.00"),
-        help_text="Rate per kilometer for payout calculation"
+        help_text="Rate per kilometer for payout calculation",
     )
-

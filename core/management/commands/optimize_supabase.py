@@ -2,6 +2,7 @@
 Django management command to apply Supabase database optimizations.
 This command applies RLS policies, optimizes indexes, and ensures schema consistency.
 """
+
 from django.core.management.base import BaseCommand
 from django.db import connection
 from pathlib import Path
@@ -9,75 +10,88 @@ import time
 
 
 class Command(BaseCommand):
-    help = 'Apply Supabase database optimizations (RLS, indexes, performance)'
+    help = "Apply Supabase database optimizations (RLS, indexes, performance)"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Show what would be done without actually doing it',
+            "--dry-run",
+            action="store_true",
+            help="Show what would be done without actually doing it",
         )
         parser.add_argument(
-            '--verify-only',
-            action='store_true',
-            help='Only verify current state without making changes',
+            "--verify-only",
+            action="store_true",
+            help="Only verify current state without making changes",
         )
 
     def handle(self, *args, **options):
-        dry_run = options['dry_run']
-        verify_only = options['verify_only']
+        dry_run = options["dry_run"]
+        verify_only = options["verify_only"]
 
         if dry_run:
-            self.stdout.write(self.style.WARNING('DRY RUN MODE - No changes will be made'))
+            self.stdout.write(
+                self.style.WARNING("DRY RUN MODE - No changes will be made")
+            )
 
         if verify_only:
-            self.stdout.write(self.style.WARNING('VERIFY ONLY MODE - Checking current state'))
+            self.stdout.write(
+                self.style.WARNING("VERIFY ONLY MODE - Checking current state")
+            )
             self.verify_database_state()
             return
 
-        self.stdout.write(self.style.SUCCESS('Starting Supabase database optimization...'))
+        self.stdout.write(
+            self.style.SUCCESS("Starting Supabase database optimization...")
+        )
 
         # Read the SQL file
-        sql_file = Path(__file__).resolve().parent.parent.parent.parent / 'supabase_optimization.sql'
+        sql_file = (
+            Path(__file__).resolve().parent.parent.parent.parent
+            / "supabase_optimization.sql"
+        )
 
         if not sql_file.exists():
-            self.stdout.write(self.style.ERROR(f'SQL file not found: {sql_file}'))
+            self.stdout.write(self.style.ERROR(f"SQL file not found: {sql_file}"))
             return
 
-        with open(sql_file, 'r') as f:
+        with open(sql_file, "r") as f:
             sql_content = f.read()
 
         if dry_run:
-            self.stdout.write(self.style.WARNING('Would execute the following SQL:'))
-            self.stdout.write(sql_content[:500] + '...\n(truncated)')
+            self.stdout.write(self.style.WARNING("Would execute the following SQL:"))
+            self.stdout.write(sql_content[:500] + "...\n(truncated)")
             return
 
         # Execute the SQL
         try:
             with connection.cursor() as cursor:
-                self.stdout.write('Executing optimization script...')
+                self.stdout.write("Executing optimization script...")
                 start_time = time.time()
 
                 cursor.execute(sql_content)
 
                 elapsed = time.time() - start_time
-                self.stdout.write(self.style.SUCCESS(
-                    f'✓ Optimization completed successfully in {elapsed:.2f} seconds'
-                ))
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"✓ Optimization completed successfully in {elapsed:.2f} seconds"
+                    )
+                )
 
             # Verify the changes
-            self.stdout.write('\nVerifying changes...')
+            self.stdout.write("\nVerifying changes...")
             self.verify_database_state()
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Error executing optimization: {str(e)}'))
+            self.stdout.write(
+                self.style.ERROR(f"Error executing optimization: {str(e)}")
+            )
             raise
 
     def verify_database_state(self):
         """Verify that optimizations were applied correctly."""
         with connection.cursor() as cursor:
             # Check RLS status
-            self.stdout.write(self.style.HTTP_INFO('\n1. Row-Level Security Status:'))
+            self.stdout.write(self.style.HTTP_INFO("\n1. Row-Level Security Status:"))
             cursor.execute("""
                 SELECT tablename, rowsecurity 
                 FROM pg_tables 
@@ -91,18 +105,20 @@ class Command(BaseCommand):
             """)
 
             for table, rls_enabled in cursor.fetchall():
-                status = '✓ ENABLED' if rls_enabled else '✗ DISABLED'
+                status = "✓ ENABLED" if rls_enabled else "✗ DISABLED"
                 color = self.style.SUCCESS if rls_enabled else self.style.WARNING
 
                 # Analytics and order_items should NOT have RLS
-                if table in ['analytics_summary', 'order_items']:
-                    status = '✓ DISABLED' if not rls_enabled else '✗ ENABLED'
-                    color = self.style.SUCCESS if not rls_enabled else self.style.WARNING
+                if table in ["analytics_summary", "order_items"]:
+                    status = "✓ DISABLED" if not rls_enabled else "✗ ENABLED"
+                    color = (
+                        self.style.SUCCESS if not rls_enabled else self.style.WARNING
+                    )
 
-                self.stdout.write(f'  {table.ljust(30)} {color(status)}')
+                self.stdout.write(f"  {table.ljust(30)} {color(status)}")
 
             # Check RLS policies count
-            self.stdout.write(self.style.HTTP_INFO('\n2. RLS Policies Count:'))
+            self.stdout.write(self.style.HTTP_INFO("\n2. RLS Policies Count:"))
             cursor.execute("""
                 SELECT schemaname, tablename, COUNT(*) as policy_count
                 FROM pg_policies
@@ -112,10 +128,12 @@ class Command(BaseCommand):
             """)
 
             for schema, table, count in cursor.fetchall():
-                self.stdout.write(f'  {table.ljust(30)} {count} policies')
+                self.stdout.write(f"  {table.ljust(30)} {count} policies")
 
             # Check for duplicate indexes
-            self.stdout.write(self.style.HTTP_INFO('\n3. Checking for Duplicate Indexes:'))
+            self.stdout.write(
+                self.style.HTTP_INFO("\n3. Checking for Duplicate Indexes:")
+            )
             cursor.execute("""
                 SELECT 
                     tablename,
@@ -129,14 +147,18 @@ class Command(BaseCommand):
 
             duplicates = cursor.fetchall()
             if duplicates:
-                self.stdout.write(self.style.WARNING(f'  Found {len(duplicates)} duplicate index groups'))
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"  Found {len(duplicates)} duplicate index groups"
+                    )
+                )
                 for table, count, indexes in duplicates[:5]:
-                    self.stdout.write(f'    {table}: {indexes}')
+                    self.stdout.write(f"    {table}: {indexes}")
             else:
-                self.stdout.write(self.style.SUCCESS('  ✓ No duplicate indexes found'))
+                self.stdout.write(self.style.SUCCESS("  ✓ No duplicate indexes found"))
 
             # Check unused indexes
-            self.stdout.write(self.style.HTTP_INFO('\n4. Unused Indexes (0 scans):'))
+            self.stdout.write(self.style.HTTP_INFO("\n4. Unused Indexes (0 scans):"))
             cursor.execute("""
                 SELECT 
                     schemaname, 
@@ -153,14 +175,16 @@ class Command(BaseCommand):
 
             unused = cursor.fetchall()
             if unused:
-                self.stdout.write(self.style.WARNING(f'  Found {len(unused)} unused indexes'))
+                self.stdout.write(
+                    self.style.WARNING(f"  Found {len(unused)} unused indexes")
+                )
                 for schema, table, index, scans in unused:
-                    self.stdout.write(f'    {table}.{index}')
+                    self.stdout.write(f"    {table}.{index}")
             else:
-                self.stdout.write(self.style.SUCCESS('  ✓ All indexes are being used'))
+                self.stdout.write(self.style.SUCCESS("  ✓ All indexes are being used"))
 
             # Check spatial indexes
-            self.stdout.write(self.style.HTTP_INFO('\n5. PostGIS Spatial Indexes:'))
+            self.stdout.write(self.style.HTTP_INFO("\n5. PostGIS Spatial Indexes:"))
             cursor.execute("""
                 SELECT 
                     tablename, 
@@ -173,14 +197,16 @@ class Command(BaseCommand):
 
             spatial = cursor.fetchall()
             if spatial:
-                self.stdout.write(self.style.SUCCESS(f'  ✓ Found {len(spatial)} spatial indexes'))
+                self.stdout.write(
+                    self.style.SUCCESS(f"  ✓ Found {len(spatial)} spatial indexes")
+                )
                 for table, index in spatial:
-                    self.stdout.write(f'    {table}.{index}')
+                    self.stdout.write(f"    {table}.{index}")
             else:
-                self.stdout.write(self.style.WARNING('  ✗ No spatial indexes found'))
+                self.stdout.write(self.style.WARNING("  ✗ No spatial indexes found"))
 
             # Check composite indexes
-            self.stdout.write(self.style.HTTP_INFO('\n6. Essential Composite Indexes:'))
+            self.stdout.write(self.style.HTTP_INFO("\n6. Essential Composite Indexes:"))
             cursor.execute("""
                 SELECT 
                     tablename,
@@ -194,10 +220,14 @@ class Command(BaseCommand):
             """)
 
             composite = cursor.fetchall()
-            self.stdout.write(self.style.SUCCESS(f'  Found {len(composite)} indexes on critical tables'))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"  Found {len(composite)} indexes on critical tables"
+                )
+            )
 
             # Check data type consistency
-            self.stdout.write(self.style.HTTP_INFO('\n7. Decimal Field Data Types:'))
+            self.stdout.write(self.style.HTTP_INFO("\n7. Decimal Field Data Types:"))
             cursor.execute("""
                 SELECT 
                     table_name,
@@ -212,14 +242,18 @@ class Command(BaseCommand):
             """)
 
             for table, column, dtype, precision, scale in cursor.fetchall():
-                status = '✓' if dtype == 'numeric' and precision == 10 and scale == 2 else '✗'
-                color = self.style.SUCCESS if status == '✓' else self.style.WARNING
+                status = (
+                    "✓"
+                    if dtype == "numeric" and precision == 10 and scale == 2
+                    else "✗"
+                )
+                color = self.style.SUCCESS if status == "✓" else self.style.WARNING
                 self.stdout.write(
-                    f'  {color(status)} {table}.{column.ljust(20)} {dtype}({precision},{scale})'
+                    f"  {color(status)} {table}.{column.ljust(20)} {dtype}({precision},{scale})"
                 )
 
             # Check foreign key constraints
-            self.stdout.write(self.style.HTTP_INFO('\n8. Foreign Key Constraints:'))
+            self.stdout.write(self.style.HTTP_INFO("\n8. Foreign Key Constraints:"))
             cursor.execute("""
                 SELECT 
                     tc.table_name,
@@ -244,10 +278,12 @@ class Command(BaseCommand):
             for table, column, ref_table, delete_rule in cursor.fetchall():
                 fk_count += 1
 
-            self.stdout.write(self.style.SUCCESS(f'  ✓ Found {fk_count} foreign key constraints'))
+            self.stdout.write(
+                self.style.SUCCESS(f"  ✓ Found {fk_count} foreign key constraints")
+            )
 
             # Database statistics
-            self.stdout.write(self.style.HTTP_INFO('\n9. Database Statistics:'))
+            self.stdout.write(self.style.HTTP_INFO("\n9. Database Statistics:"))
             cursor.execute("""
                 SELECT 
                     schemaname,
@@ -268,8 +304,7 @@ class Command(BaseCommand):
             for row in cursor.fetchall():
                 schema, table, ins, upd, del_, live, dead, vacuum, analyze = row
                 self.stdout.write(
-                    f'  {table.ljust(30)} Live: {live:>7,} Dead: {dead:>6,}'
+                    f"  {table.ljust(30)} Live: {live:>7,} Dead: {dead:>6,}"
                 )
 
-            self.stdout.write(self.style.SUCCESS('\n✓ Verification complete'))
-
+            self.stdout.write(self.style.SUCCESS("\n✓ Verification complete"))

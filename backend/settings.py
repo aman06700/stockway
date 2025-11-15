@@ -306,7 +306,11 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # Optional: Supabase Edge Function URL for push/SMS delivery
-SUPABASE_EDGE_FUNCTION_URL = Config.SUPABASE_EDGE_FUNCTION_URL if hasattr(Config, "SUPABASE_EDGE_FUNCTION_URL") else None
+SUPABASE_EDGE_FUNCTION_URL = (
+    Config.SUPABASE_EDGE_FUNCTION_URL
+    if hasattr(Config, "SUPABASE_EDGE_FUNCTION_URL")
+    else None
+)
 
 # ===========================
 # LOGGING CONFIGURATION

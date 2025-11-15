@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @transaction.atomic
 def initiate_payment(request):
@@ -37,27 +37,31 @@ def initiate_payment(request):
     if request.user.role != "SHOPKEEPER":
         return Response(
             {"error": "Only shopkeepers can initiate payments."},
-            status=status.HTTP_403_FORBIDDEN
+            status=status.HTTP_403_FORBIDDEN,
         )
 
-    serializer = PaymentInitiateSerializer(data=request.data, context={'request': request})
+    serializer = PaymentInitiateSerializer(
+        data=request.data, context={"request": request}
+    )
 
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # Get validated data
-    order_id = serializer.validated_data['order_id']
-    amount = serializer.validated_data['amount']
-    mode = serializer.validated_data['mode']
+    order_id = serializer.validated_data["order_id"]
+    amount = serializer.validated_data["amount"]
+    mode = serializer.validated_data["mode"]
 
     # Get order
-    order = Order.objects.select_related('warehouse', 'warehouse__admin').get(id=order_id)
+    order = Order.objects.select_related("warehouse", "warehouse__admin").get(
+        id=order_id
+    )
 
     # Verify shopkeeper owns this order
     if order.shopkeeper != request.user:
         return Response(
             {"error": "You can only make payments for your own orders."},
-            status=status.HTTP_403_FORBIDDEN
+            status=status.HTTP_403_FORBIDDEN,
         )
 
     # Create payment
@@ -67,18 +71,17 @@ def initiate_payment(request):
         payee=order.warehouse.admin,
         amount=amount,
         mode=mode,
-        status="pending"
+        status="pending",
     )
 
-    logger.info(f"Payment {payment.id} initiated by shopkeeper {request.user.id} for order {order_id}")
-
-    return Response(
-        PaymentSerializer(payment).data,
-        status=status.HTTP_201_CREATED
+    logger.info(
+        f"Payment {payment.id} initiated by shopkeeper {request.user.id} for order {order_id}"
     )
 
+    return Response(PaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
 
-@api_view(['PATCH'])
+
+@api_view(["PATCH"])
 @permission_classes([IsAuthenticated])
 @transaction.atomic
 def confirm_payment(request):
@@ -94,7 +97,7 @@ def confirm_payment(request):
     if request.user.role not in ["WAREHOUSE_MANAGER", "ADMIN"]:
         return Response(
             {"error": "Only warehouse admins can confirm payments."},
-            status=status.HTTP_403_FORBIDDEN
+            status=status.HTTP_403_FORBIDDEN,
         )
 
     serializer = PaymentConfirmSerializer(data=request.data)
@@ -102,16 +105,17 @@ def confirm_payment(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    payment_id = serializer.validated_data['payment_id']
-    action = serializer.validated_data['action']
+    payment_id = serializer.validated_data["payment_id"]
+    action = serializer.validated_data["action"]
 
     # Get payment
     try:
-        payment = Payment.objects.select_related('order', 'order__warehouse').get(id=payment_id)
+        payment = Payment.objects.select_related("order", "order__warehouse").get(
+            id=payment_id
+        )
     except Payment.DoesNotExist:
         return Response(
-            {"error": "Payment not found."},
-            status=status.HTTP_404_NOT_FOUND
+            {"error": "Payment not found."}, status=status.HTTP_404_NOT_FOUND
         )
 
     # Verify warehouse admin owns this payment's warehouse
@@ -119,14 +123,14 @@ def confirm_payment(request):
         if payment.order.warehouse.admin != request.user:
             return Response(
                 {"error": "You can only confirm payments for your warehouse."},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
     # Check payment is pending
     if payment.status != "pending":
         return Response(
             {"error": f"Payment is already {payment.status}."},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     # Perform action
@@ -144,13 +148,10 @@ def confirm_payment(request):
 
         logger.info(f"Payment {payment.id} rejected for order {payment.order.id}")
 
-    return Response(
-        PaymentSerializer(payment).data,
-        status=status.HTTP_200_OK
-    )
+    return Response(PaymentSerializer(payment).data, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @transaction.atomic
 def process_payouts(request):
@@ -164,7 +165,7 @@ def process_payouts(request):
     if request.user.role not in ["WAREHOUSE_MANAGER", "ADMIN"]:
         return Response(
             {"error": "Only admins can process payouts."},
-            status=status.HTTP_403_FORBIDDEN
+            status=status.HTTP_403_FORBIDDEN,
         )
 
     serializer = PayoutProcessSerializer(data=request.data)
@@ -172,8 +173,8 @@ def process_payouts(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    order_ids = serializer.validated_data.get('order_ids')
-    rate_per_km = serializer.validated_data.get('rate_per_km', Decimal("10.00"))
+    order_ids = serializer.validated_data.get("order_ids")
+    rate_per_km = serializer.validated_data.get("rate_per_km", Decimal("10.00"))
 
     # Get delivered orders
     if order_ids:
@@ -189,33 +190,39 @@ def process_payouts(request):
     payouts_created = []
     errors = []
 
-    for order in orders.select_related('warehouse'):
+    for order in orders.select_related("warehouse"):
         try:
             # Get delivery record
             try:
-                delivery = Delivery.objects.select_related('rider').get(order=order)
+                delivery = Delivery.objects.select_related("rider").get(order=order)
             except Delivery.DoesNotExist:
-                errors.append({
-                    "order_id": order.id,
-                    "error": "No delivery record found"
-                })
+                errors.append(
+                    {"order_id": order.id, "error": "No delivery record found"}
+                )
                 continue
 
             # Check if payout already exists for this specific delivery
             existing_payout = Payout.objects.filter(
-                rider=delivery.rider,
-                warehouse=order.warehouse
+                rider=delivery.rider, warehouse=order.warehouse
             ).first()
 
             # Calculate distance
-            distance_km = getattr(delivery, 'distance_km', 0.0)
+            distance_km = getattr(delivery, "distance_km", 0.0)
             if distance_km == 0.0:
                 # Try to compute from PostGIS if available
-                if hasattr(delivery, 'pickup_location') and hasattr(delivery, 'delivery_location'):
+                if hasattr(delivery, "pickup_location") and hasattr(
+                    delivery, "delivery_location"
+                ):
                     from django.contrib.gis.measure import Distance
                     from django.contrib.gis.geos import Point
+
                     if delivery.pickup_location and delivery.delivery_location:
-                        distance = delivery.pickup_location.distance(delivery.delivery_location) * 111  # rough km conversion
+                        distance = (
+                            delivery.pickup_location.distance(
+                                delivery.delivery_location
+                            )
+                            * 111
+                        )  # rough km conversion
                         distance_km = float(distance)
 
             # Compute payout amount
@@ -236,34 +243,36 @@ def process_payouts(request):
                     total_distance=distance_km,
                     rate_per_km=rate_per_km,
                     computed_amount=computed_amount,
-                    status="pending"
+                    status="pending",
                 )
 
-            payouts_created.append({
-                "payout_id": payout.id,
-                "order_id": order.id,
-                "rider_id": delivery.rider.id,
-                "amount": float(computed_amount)
-            })
+            payouts_created.append(
+                {
+                    "payout_id": payout.id,
+                    "order_id": order.id,
+                    "rider_id": delivery.rider.id,
+                    "amount": float(computed_amount),
+                }
+            )
 
             logger.info(f"Payout {payout.id} processed for order {order.id}")
 
         except Exception as e:
-            errors.append({
-                "order_id": order.id,
-                "error": str(e)
-            })
+            errors.append({"order_id": order.id, "error": str(e)})
             logger.error(f"Error processing payout for order {order.id}: {str(e)}")
 
-    return Response({
-        "success": True,
-        "payouts_created": len(payouts_created),
-        "payouts": payouts_created,
-        "errors": errors
-    }, status=status.HTTP_201_CREATED if payouts_created else status.HTTP_200_OK)
+    return Response(
+        {
+            "success": True,
+            "payouts_created": len(payouts_created),
+            "payouts": payouts_created,
+            "errors": errors,
+        },
+        status=status.HTTP_201_CREATED if payouts_created else status.HTTP_200_OK,
+    )
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_payouts(request):
     """
@@ -288,21 +297,20 @@ def list_payouts(request):
         except Exception:
             return Response(
                 {"error": "No rider profile found for user."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
     else:
         return Response(
-            {"error": "Unauthorized to view payouts."},
-            status=status.HTTP_403_FORBIDDEN
+            {"error": "Unauthorized to view payouts."}, status=status.HTTP_403_FORBIDDEN
         )
 
     # Apply filters
-    payout_status = request.query_params.get('status')
+    payout_status = request.query_params.get("status")
     if payout_status:
         payouts = payouts.filter(status=payout_status)
 
     # Select related to optimize queries
-    payouts = payouts.select_related('rider', 'warehouse').order_by('-created_at')
+    payouts = payouts.select_related("rider", "warehouse").order_by("-created_at")
 
     serializer = PayoutSerializer(payouts, many=True)
 

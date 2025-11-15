@@ -1,6 +1,7 @@
 """
 Utility functions for sending notifications
 """
+
 from notifications.tasks import send_notification_task
 import logging
 
@@ -23,19 +24,19 @@ def send_notification(user_id, title, message, notification_type="system"):
     # Validate notification type
     valid_types = ["order_update", "payment", "system"]
     if notification_type not in valid_types:
-        logger.warning(f"Invalid notification type: {notification_type}, using 'system'")
+        logger.warning(
+            f"Invalid notification type: {notification_type}, using 'system'"
+        )
         notification_type = "system"
 
     # Enqueue task to notifications queue
     task = send_notification_task.apply_async(
         args=[user_id, title, message, notification_type],
         queue="notifications",
-        retry=True
+        retry=True,
     )
 
-    logger.info(
-        f"Notification task enqueued for user {user_id}: {task.id}"
-    )
+    logger.info(f"Notification task enqueued for user {user_id}: {task.id}")
 
     return task
 
@@ -54,10 +55,7 @@ def send_order_update_notification(user_id, order_id, status, additional_info=""
     message = f"Your order status has been updated to: {status}. {additional_info}"
 
     return send_notification(
-        user_id=user_id,
-        title=title,
-        message=message,
-        notification_type="order_update"
+        user_id=user_id, title=title, message=message, notification_type="order_update"
     )
 
 
@@ -74,10 +72,7 @@ def send_rider_assignment_notification(user_id, order_id, rider_name):
     message = f"Rider {rider_name} has been assigned to your order."
 
     return send_notification(
-        user_id=user_id,
-        title=title,
-        message=message,
-        notification_type="order_update"
+        user_id=user_id, title=title, message=message, notification_type="order_update"
     )
 
 
@@ -95,10 +90,7 @@ def send_payment_notification(user_id, payment_id, amount, status):
     message = f"Payment #{payment_id} of ₹{amount} has been {status}."
 
     return send_notification(
-        user_id=user_id,
-        title=title,
-        message=message,
-        notification_type="payment"
+        user_id=user_id, title=title, message=message, notification_type="payment"
     )
 
 
@@ -112,9 +104,5 @@ def send_system_notification(user_id, title, message):
         message: Notification message
     """
     return send_notification(
-        user_id=user_id,
-        title=title,
-        message=message,
-        notification_type="system"
+        user_id=user_id, title=title, message=message, notification_type="system"
     )
-

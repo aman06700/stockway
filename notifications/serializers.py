@@ -24,4 +24,3 @@ class MarkAsReadSerializer(serializers.Serializer):
                 "Either 'notification_id' or 'mark_all' must be provided"
             )
         return attrs
-

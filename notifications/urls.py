@@ -5,4 +5,3 @@ urlpatterns = [
     path("", NotificationListView.as_view(), name="notification-list"),
     path("read/", MarkNotificationReadView.as_view(), name="notification-mark-read"),
 ]
-

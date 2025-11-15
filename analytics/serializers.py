@@ -89,4 +89,3 @@ class WarehousePersonalAnalyticsSerializer(serializers.Serializer):
     pending_orders = serializers.IntegerField(required=False)
     completed_orders = serializers.IntegerField(required=False)
     rejected_orders = serializers.IntegerField(required=False)
-

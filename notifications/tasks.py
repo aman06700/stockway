@@ -1,6 +1,7 @@
 """
 Celery tasks for notification processing
 """
+
 from celery import shared_task
 from django.conf import settings
 from notifications.models import Notification
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
     retry_backoff_max=600,
     retry_jitter=True,
     max_retries=3,
-    name="notifications.send_notification"
+    name="notifications.send_notification",
 )
 def send_notification_task(self, user_id, title, message, notification_type):
     """
@@ -39,18 +40,11 @@ def send_notification_task(self, user_id, title, message, notification_type):
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             logger.error(f"User {user_id} not found for notification")
-            return {
-                "success": False,
-                "error": "User not found",
-                "user_id": user_id
-            }
+            return {"success": False, "error": "User not found", "user_id": user_id}
 
         # Create notification in database
         notification = Notification.objects.create(
-            user=user,
-            title=title,
-            message=message,
-            type=notification_type
+            user=user, title=title, message=message, type=notification_type
         )
 
         logger.info(
@@ -58,7 +52,10 @@ def send_notification_task(self, user_id, title, message, notification_type):
         )
 
         # Optionally trigger Supabase Edge Function for push/SMS delivery
-        if hasattr(settings, "SUPABASE_EDGE_FUNCTION_URL") and settings.SUPABASE_EDGE_FUNCTION_URL:
+        if (
+            hasattr(settings, "SUPABASE_EDGE_FUNCTION_URL")
+            and settings.SUPABASE_EDGE_FUNCTION_URL
+        ):
             try:
                 _trigger_edge_function_delivery(notification, user)
             except Exception as e:
@@ -71,13 +68,13 @@ def send_notification_task(self, user_id, title, message, notification_type):
             "success": True,
             "notification_id": notification.id,
             "user_id": user_id,
-            "type": notification_type
+            "type": notification_type,
         }
 
     except Exception as e:
         logger.error(
             f"Failed to process notification for user {user_id}: {str(e)}",
-            exc_info=True
+            exc_info=True,
         )
         # Re-raise to trigger Celery retry mechanism
         raise
@@ -100,19 +97,16 @@ def _trigger_edge_function_delivery(notification, user):
         "user_email": user.email,
         "title": notification.title,
         "message": notification.message,
-        "type": notification.type
+        "type": notification.type,
     }
 
     headers = {
         "Authorization": f"Bearer {service_key}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     response = requests.post(
-        edge_function_url,
-        json=payload,
-        headers=headers,
-        timeout=10
+        edge_function_url, json=payload, headers=headers, timeout=10
     )
 
     response.raise_for_status()
@@ -131,14 +125,9 @@ def cleanup_old_notifications_task():
     threshold_date = timezone.now() - timedelta(days=90)
 
     deleted_count, _ = Notification.objects.filter(
-        is_read=True,
-        created_at__lt=threshold_date
+        is_read=True, created_at__lt=threshold_date
     ).delete()
 
     logger.info(f"Cleaned up {deleted_count} old notifications")
 
-    return {
-        "success": True,
-        "deleted_count": deleted_count
-    }
-
+    return {"success": True, "deleted_count": deleted_count}

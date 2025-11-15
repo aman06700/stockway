@@ -39,16 +39,32 @@ urlpatterns = [
         RiderLocationUpdateView.as_view(),
         name="rider-location-update",
     ),
-
     # New rider advanced features
     path("rider/earnings/", RiderEarningsView.as_view(), name="rider-earnings"),
     path("rider/history/", RiderHistoryView.as_view(), name="rider-history"),
-    path("rider/live-location/", RiderLiveLocationView.as_view(), name="rider-live-location"),
-    path("rider/performance/", RiderPerformanceView.as_view(), name="rider-performance"),
-    path("rider/availability/update/", RiderAvailabilityUpdateView.as_view(), name="rider-availability-update"),
-    path("rider/notifications/", RiderNotificationsView.as_view(), name="rider-notifications"),
-    path("rider/notifications/<int:pk>/mark-read/", RiderNotificationMarkReadView.as_view(), name="rider-notification-mark-read"),
-
+    path(
+        "rider/live-location/",
+        RiderLiveLocationView.as_view(),
+        name="rider-live-location",
+    ),
+    path(
+        "rider/performance/", RiderPerformanceView.as_view(), name="rider-performance"
+    ),
+    path(
+        "rider/availability/update/",
+        RiderAvailabilityUpdateView.as_view(),
+        name="rider-availability-update",
+    ),
+    path(
+        "rider/notifications/",
+        RiderNotificationsView.as_view(),
+        name="rider-notifications",
+    ),
+    path(
+        "rider/notifications/<int:pk>/mark-read/",
+        RiderNotificationMarkReadView.as_view(),
+        name="rider-notification-mark-read",
+    ),
     # Warehouse admin endpoints
     path(
         "warehouse/riders/",
@@ -56,10 +72,25 @@ urlpatterns = [
         name="warehouse-riders-list",
     ),
     path("warehouse/riders/<int:pk>/", RiderDetailView.as_view(), name="rider-detail"),
-    path("warehouse/riders/active/", WarehouseActiveRidersView.as_view(), name="warehouse-active-riders"),
-    path("warehouse/riders/metrics/", WarehouseRiderMetricsView.as_view(), name="warehouse-rider-metrics"),
-
+    path(
+        "warehouse/riders/active/",
+        WarehouseActiveRidersView.as_view(),
+        name="warehouse-active-riders",
+    ),
+    path(
+        "warehouse/riders/metrics/",
+        WarehouseRiderMetricsView.as_view(),
+        name="warehouse-rider-metrics",
+    ),
     # Admin control endpoints
-    path("admin/riders/manage/", AdminRiderManagementView.as_view(), name="admin-rider-management"),
-    path("admin/riders/export/payouts/", AdminRiderPayoutExportView.as_view(), name="admin-rider-payout-export"),
+    path(
+        "admin/riders/manage/",
+        AdminRiderManagementView.as_view(),
+        name="admin-rider-management",
+    ),
+    path(
+        "admin/riders/export/payouts/",
+        AdminRiderPayoutExportView.as_view(),
+        name="admin-rider-payout-export",
+    ),
 ]

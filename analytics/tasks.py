@@ -227,12 +227,9 @@ def _compute_rider_metrics(target_date):
         total_distance = 0.0
 
         # Total earnings from delivery fees
-        total_earnings = (
-            deliveries.filter(status="delivered").aggregate(
-                total=Coalesce(Sum("delivery_fee"), Decimal("0.00"))
-            )["total"]
-            or Decimal("0.00")
-        )
+        total_earnings = deliveries.filter(status="delivered").aggregate(
+            total=Coalesce(Sum("delivery_fee"), Decimal("0.00"))
+        )["total"] or Decimal("0.00")
 
         # Average delivery time
         delivery_stats = deliveries.filter(status="delivered").aggregate(
@@ -378,7 +375,9 @@ def _get_realtime_system_metrics():
     start_of_day = datetime.combine(today, datetime.min.time())
     end_of_day = timezone.now()
 
-    metrics = Order.objects.filter(created_at__range=[start_of_day, end_of_day]).aggregate(
+    metrics = Order.objects.filter(
+        created_at__range=[start_of_day, end_of_day]
+    ).aggregate(
         total_orders=Count("id"),
         total_revenue=Coalesce(Sum("total_amount"), Decimal("0.00")),
         pending_orders=Count("id", filter=Q(status__in=["pending", "accepted"])),
@@ -511,9 +510,13 @@ def compute_warehouse_analytics(warehouse_id, target_date=None):
 
         avg_delivery_minutes = 0.0
         if delivery_stats["avg_delivery_time"]:
-            avg_delivery_minutes = delivery_stats["avg_delivery_time"].total_seconds() / 60
+            avg_delivery_minutes = (
+                delivery_stats["avg_delivery_time"].total_seconds() / 60
+            )
 
-        active_riders = Rider.objects.filter(warehouse=warehouse, status="available").count()
+        active_riders = Rider.objects.filter(
+            warehouse=warehouse, status="available"
+        ).count()
 
         metrics = {
             "warehouse_name": warehouse.name,
@@ -566,11 +569,9 @@ def compute_rider_analytics(rider_id, target_date=None):
         completed_deliveries = deliveries.filter(status="delivered").count()
         total_distance = 0.0
 
-        total_earnings = (
-            deliveries.filter(status="delivered").aggregate(
-                total=Coalesce(Sum("delivery_fee"), Decimal("0.00"))
-            )["total"] or Decimal("0.00")
-        )
+        total_earnings = deliveries.filter(status="delivered").aggregate(
+            total=Coalesce(Sum("delivery_fee"), Decimal("0.00"))
+        )["total"] or Decimal("0.00")
 
         delivery_stats = deliveries.filter(status="delivered").aggregate(
             avg_delivery_time=Avg(
@@ -582,7 +583,9 @@ def compute_rider_analytics(rider_id, target_date=None):
 
         avg_delivery_minutes = 0.0
         if delivery_stats["avg_delivery_time"]:
-            avg_delivery_minutes = delivery_stats["avg_delivery_time"].total_seconds() / 60
+            avg_delivery_minutes = (
+                delivery_stats["avg_delivery_time"].total_seconds() / 60
+            )
 
         on_time_count = 0
         late_count = 0
@@ -593,10 +596,16 @@ def compute_rider_analytics(rider_id, target_date=None):
             else:
                 late_count += 1
 
-        on_time_ratio = (on_time_count / completed_deliveries * 100) if completed_deliveries > 0 else 0.0
+        on_time_ratio = (
+            (on_time_count / completed_deliveries * 100)
+            if completed_deliveries > 0
+            else 0.0
+        )
 
         metrics = {
-            "rider_name": rider.user.get_full_name() if hasattr(rider.user, 'get_full_name') else str(rider.user),
+            "rider_name": rider.user.get_full_name()
+            if hasattr(rider.user, "get_full_name")
+            else str(rider.user),
             "completed_deliveries": completed_deliveries,
             "total_distance": round(total_distance, 2),
             "total_earnings": float(total_earnings),
@@ -619,5 +628,3 @@ def compute_rider_analytics(rider_id, target_date=None):
     except Rider.DoesNotExist:
         logger.error(f"Rider {rider_id} not found")
         return f"Rider {rider_id} not found"
-
-

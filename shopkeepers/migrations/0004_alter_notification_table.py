@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('shopkeepers', '0003_enable_rls_shopkeepers'),
+        ("shopkeepers", "0003_enable_rls_shopkeepers"),
     ]
 
     operations = [
         migrations.AlterModelTable(
-            name='notification',
-            table='shopkeeper_notifications',
+            name="notification",
+            table="shopkeeper_notifications",
         ),
     ]

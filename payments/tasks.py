@@ -1,6 +1,7 @@
 """
 Celery tasks for payment and payout processing
 """
+
 from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
     retry_backoff_max=600,
     retry_jitter=True,
     max_retries=3,
-    name="payouts.compute_for_order"
+    name="payouts.compute_for_order",
 )
 def compute_payout_for_order(self, order_id):
     """
@@ -37,43 +38,49 @@ def compute_payout_for_order(self, order_id):
         with transaction.atomic():
             # Get order
             try:
-                order = Order.objects.select_related('warehouse').get(id=order_id)
+                order = Order.objects.select_related("warehouse").get(id=order_id)
             except Order.DoesNotExist:
                 logger.error(f"Order {order_id} not found for payout computation")
                 return {
                     "success": False,
                     "error": "Order not found",
-                    "order_id": order_id
+                    "order_id": order_id,
                 }
 
             # Validate order is delivered
             if order.status != "delivered":
-                logger.warning(f"Order {order_id} is not delivered, cannot compute payout")
+                logger.warning(
+                    f"Order {order_id} is not delivered, cannot compute payout"
+                )
                 return {
                     "success": False,
                     "error": "Order not delivered",
-                    "order_id": order_id
+                    "order_id": order_id,
                 }
 
             # Get delivery record
             try:
-                delivery = Delivery.objects.select_related('rider').get(order=order)
+                delivery = Delivery.objects.select_related("rider").get(order=order)
             except Delivery.DoesNotExist:
                 logger.error(f"No delivery record found for order {order_id}")
                 return {
                     "success": False,
                     "error": "No delivery record found",
-                    "order_id": order_id
+                    "order_id": order_id,
                 }
 
             # Check if payout already exists
-            if Payout.objects.filter(rider=delivery.rider, warehouse=order.warehouse).exists():
+            if Payout.objects.filter(
+                rider=delivery.rider, warehouse=order.warehouse
+            ).exists():
                 # Check if we should add to existing payout or skip
-                logger.info(f"Payout may already exist for rider {delivery.rider.id} and warehouse {order.warehouse.id}")
+                logger.info(
+                    f"Payout may already exist for rider {delivery.rider.id} and warehouse {order.warehouse.id}"
+                )
 
             # Calculate distance (assuming delivery model has distance field)
             # If not, we'll use a default or compute from PostGIS
-            distance_km = getattr(delivery, 'distance_km', 0.0)
+            distance_km = getattr(delivery, "distance_km", 0.0)
 
             # Default rate per km
             rate_per_km = Decimal("10.00")
@@ -88,7 +95,7 @@ def compute_payout_for_order(self, order_id):
                 total_distance=distance_km,
                 rate_per_km=rate_per_km,
                 computed_amount=computed_amount,
-                status="pending"
+                status="pending",
             )
 
             logger.info(
@@ -104,21 +111,17 @@ def compute_payout_for_order(self, order_id):
                 "payout_id": payout.id,
                 "order_id": order_id,
                 "rider_id": delivery.rider.id,
-                "amount": float(computed_amount)
+                "amount": float(computed_amount),
             }
 
     except Exception as e:
         logger.error(
-            f"Failed to compute payout for order {order_id}: {str(e)}",
-            exc_info=True
+            f"Failed to compute payout for order {order_id}: {str(e)}", exc_info=True
         )
         raise
 
 
-@shared_task(
-    bind=True,
-    name="payouts.nightly_rollup"
-)
+@shared_task(bind=True, name="payouts.nightly_rollup")
 def nightly_payout_rollup(self):
     """
     Nightly task to aggregate and settle all pending payouts for each warehouse.
@@ -133,9 +136,11 @@ def nightly_payout_rollup(self):
 
     try:
         # Get all warehouses with pending payouts
-        warehouses_with_payouts = Payout.objects.filter(
-            status="pending"
-        ).values_list('warehouse', flat=True).distinct()
+        warehouses_with_payouts = (
+            Payout.objects.filter(status="pending")
+            .values_list("warehouse", flat=True)
+            .distinct()
+        )
 
         results = []
 
@@ -143,29 +148,24 @@ def nightly_payout_rollup(self):
             with transaction.atomic():
                 # Aggregate pending payouts for this warehouse
                 stats = Payout.objects.filter(
-                    warehouse_id=warehouse_id,
-                    status="pending"
+                    warehouse_id=warehouse_id, status="pending"
                 ).aggregate(
-                    total_amount=Sum('computed_amount'),
-                    total_payouts=Count('id'),
-                    total_distance=Sum('total_distance')
+                    total_amount=Sum("computed_amount"),
+                    total_payouts=Count("id"),
+                    total_distance=Sum("total_distance"),
                 )
 
                 # Mark all pending payouts as settled
                 updated_count = Payout.objects.filter(
-                    warehouse_id=warehouse_id,
-                    status="pending"
-                ).update(
-                    status="settled",
-                    updated_at=timezone.now()
-                )
+                    warehouse_id=warehouse_id, status="pending"
+                ).update(status="settled", updated_at=timezone.now())
 
                 warehouse_result = {
                     "warehouse_id": warehouse_id,
-                    "total_amount": float(stats['total_amount'] or 0),
-                    "total_payouts": stats['total_payouts'],
-                    "total_distance": float(stats['total_distance'] or 0),
-                    "settled_count": updated_count
+                    "total_amount": float(stats["total_amount"] or 0),
+                    "total_payouts": stats["total_payouts"],
+                    "total_distance": float(stats["total_distance"] or 0),
+                    "settled_count": updated_count,
                 }
 
                 results.append(warehouse_result)
@@ -182,18 +182,17 @@ def nightly_payout_rollup(self):
             "success": True,
             "timestamp": timezone.now().isoformat(),
             "warehouses_processed": len(results),
-            "results": results
+            "results": results,
         }
 
     except Exception as e:
-        logger.error(f"Failed to complete nightly payout rollup: {str(e)}", exc_info=True)
+        logger.error(
+            f"Failed to complete nightly payout rollup: {str(e)}", exc_info=True
+        )
         raise
 
 
-@shared_task(
-    bind=True,
-    name="payouts.notify_completion"
-)
+@shared_task(bind=True, name="payouts.notify_completion")
 def notify_payout_completion(self, payout_id, success=True):
     """
     Send notification when payout is completed or failed.
@@ -209,7 +208,7 @@ def notify_payout_completion(self, payout_id, success=True):
     from notifications.tasks import send_notification_task
 
     try:
-        payout = Payout.objects.select_related('rider', 'warehouse').get(id=payout_id)
+        payout = Payout.objects.select_related("rider", "warehouse").get(id=payout_id)
 
         if success:
             title = "Payout Completed"
@@ -225,7 +224,7 @@ def notify_payout_completion(self, payout_id, success=True):
             user_id=payout.rider.user.id,
             title=title,
             message=message,
-            notification_type=notification_type
+            notification_type=notification_type,
         )
 
         logger.info(f"Notification sent for payout {payout_id}, success={success}")
@@ -233,16 +232,12 @@ def notify_payout_completion(self, payout_id, success=True):
         return {
             "success": True,
             "payout_id": payout_id,
-            "notification_type": notification_type
+            "notification_type": notification_type,
         }
 
     except Payout.DoesNotExist:
         logger.error(f"Payout {payout_id} not found for notification")
-        return {
-            "success": False,
-            "error": "Payout not found",
-            "payout_id": payout_id
-        }
+        return {"success": False, "error": "Payout not found", "payout_id": payout_id}
     except Exception as e:
         logger.error(f"Failed to send payout notification: {str(e)}", exc_info=True)
         raise
@@ -260,13 +255,13 @@ def notify_payout_creation(payout_id):
     from notifications.tasks import send_notification_task
 
     try:
-        payout = Payout.objects.select_related('rider', 'warehouse').get(id=payout_id)
+        payout = Payout.objects.select_related("rider", "warehouse").get(id=payout_id)
 
         send_notification_task.delay(
             user_id=payout.rider.user.id,
             title="New Payout Pending",
             message=f"A payout of ₹{payout.computed_amount} for {payout.total_distance}km has been created.",
-            notification_type="payout_created"
+            notification_type="payout_created",
         )
 
         logger.info(f"Creation notification sent for payout {payout_id}")
@@ -294,11 +289,10 @@ def notify_payout_settlement(warehouse_id, stats):
             user_id=warehouse.admin.id,
             title="Daily Payout Settlement Complete",
             message=f"Settled {stats['settled_count']} payouts totaling ₹{stats['total_amount']}.",
-            notification_type="settlement_complete"
+            notification_type="settlement_complete",
         )
 
         logger.info(f"Settlement notification sent for warehouse {warehouse_id}")
 
     except Exception as e:
         logger.error(f"Failed to send settlement notification: {str(e)}")
-

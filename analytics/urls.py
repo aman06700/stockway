@@ -4,11 +4,10 @@ from rest_framework.routers import DefaultRouter
 from .views import AnalyticsViewSet
 
 router = DefaultRouter()
-router.register(r'', AnalyticsViewSet, basename='analytics')
+router.register(r"", AnalyticsViewSet, basename="analytics")
 
-app_name = 'analytics'
+app_name = "analytics"
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]
-

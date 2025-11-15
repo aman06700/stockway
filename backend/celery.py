@@ -1,6 +1,7 @@
 """
 Celery configuration for Django project
 """
+
 import os
 from celery import Celery
 from django.conf import settings
@@ -22,4 +23,3 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 def debug_task(self):
     """Debug task to test Celery setup"""
     print(f"Request: {self.request!r}")
-

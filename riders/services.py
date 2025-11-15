@@ -1,6 +1,7 @@
 """
 Rider services for Redis caching, location tracking, and analytics
 """
+
 import redis
 import json
 from decimal import Decimal
@@ -18,16 +19,13 @@ class RedisService:
     """Redis service for caching rider locations and metrics"""
 
     def __init__(self):
-        redis_host = getattr(Config, 'REDIS_HOST', 'localhost')
-        redis_port = getattr(Config, 'REDIS_PORT', 6379)
-        redis_db = getattr(Config, 'REDIS_DB', 0)
+        redis_host = getattr(Config, "REDIS_HOST", "localhost")
+        redis_port = getattr(Config, "REDIS_PORT", 6379)
+        redis_db = getattr(Config, "REDIS_DB", 0)
 
         try:
             self.redis_client = redis.Redis(
-                host=redis_host,
-                port=redis_port,
-                db=redis_db,
-                decode_responses=True
+                host=redis_host, port=redis_port, db=redis_db, decode_responses=True
             )
             self.redis_client.ping()
         except Exception as e:
@@ -44,9 +42,9 @@ class RedisService:
         try:
             key = f"rider:location:{rider_id}"
             data = {
-                'latitude': latitude,
-                'longitude': longitude,
-                'timestamp': timezone.now().isoformat()
+                "latitude": latitude,
+                "longitude": longitude,
+                "timestamp": timezone.now().isoformat(),
             }
             self.redis_client.setex(key, expiry, json.dumps(data))
             return True
@@ -83,15 +81,17 @@ class RedisService:
             active_riders = []
 
             for key in self.redis_client.scan_iter(pattern):
-                rider_id = key.split(':')[-1]
+                rider_id = key.split(":")[-1]
                 location_data = self.get_rider_location(rider_id)
                 if location_data:
-                    active_riders.append({
-                        'rider_id': int(rider_id),
-                        'latitude': location_data['latitude'],
-                        'longitude': location_data['longitude'],
-                        'last_update': location_data['timestamp']
-                    })
+                    active_riders.append(
+                        {
+                            "rider_id": int(rider_id),
+                            "latitude": location_data["latitude"],
+                            "longitude": location_data["longitude"],
+                            "last_update": location_data["timestamp"],
+                        }
+                    )
 
             return active_riders
         except Exception as e:
@@ -221,7 +221,7 @@ class LocationTrackingService:
             location=new_location,
             speed_kmh=speed_kmh,
             distance_from_previous_km=distance_km,
-            is_suspicious=is_suspicious
+            is_suspicious=is_suspicious,
         )
 
         # Cache in Redis
@@ -229,10 +229,10 @@ class LocationTrackingService:
         redis_service.set_rider_location(rider.id, latitude, longitude)
 
         return {
-            'updated': True,
-            'is_suspicious': is_suspicious,
-            'speed_kmh': speed_kmh,
-            'distance_km': distance_km
+            "updated": True,
+            "is_suspicious": is_suspicious,
+            "speed_kmh": speed_kmh,
+            "distance_km": distance_km,
         }
 
 
@@ -253,36 +253,33 @@ class EarningsService:
         if end_date:
             payouts = payouts.filter(created_at__lte=end_date)
 
-        completed_payouts = payouts.filter(status='completed')
+        completed_payouts = payouts.filter(status="completed")
 
-        total_earnings = completed_payouts.aggregate(
-            total=Sum('total_amount')
-        )['total'] or Decimal('0.00')
+        total_earnings = completed_payouts.aggregate(total=Sum("total_amount"))[
+            "total"
+        ] or Decimal("0.00")
 
-        total_distance = completed_payouts.aggregate(
-            total=Sum('distance_km')
-        )['total'] or Decimal('0.00')
+        total_distance = completed_payouts.aggregate(total=Sum("distance_km"))[
+            "total"
+        ] or Decimal("0.00")
 
         completed_orders = completed_payouts.count()
 
         return {
-            'total_earnings': float(total_earnings),
-            'completed_orders_count': completed_orders,
-            'total_distance_km': float(total_distance)
+            "total_earnings": float(total_earnings),
+            "completed_orders_count": completed_orders,
+            "total_distance_km": float(total_distance),
         }
 
     @staticmethod
-    def get_earnings_by_period(rider, period='daily', start_date=None, end_date=None):
+    def get_earnings_by_period(rider, period="daily", start_date=None, end_date=None):
         """
         Get earnings grouped by period (daily, weekly, monthly)
         """
         from warehouses.models import RiderPayout
         from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
 
-        payouts = RiderPayout.objects.filter(
-            rider=rider,
-            status='completed'
-        )
+        payouts = RiderPayout.objects.filter(rider=rider, status="completed")
 
         if start_date:
             payouts = payouts.filter(created_at__gte=start_date)
@@ -290,18 +287,21 @@ class EarningsService:
             payouts = payouts.filter(created_at__lte=end_date)
 
         trunc_func = {
-            'daily': TruncDate,
-            'weekly': TruncWeek,
-            'monthly': TruncMonth,
+            "daily": TruncDate,
+            "weekly": TruncWeek,
+            "monthly": TruncMonth,
         }.get(period, TruncDate)
 
-        grouped = payouts.annotate(
-            period=trunc_func('created_at')
-        ).values('period').annotate(
-            earnings=Sum('total_amount'),
-            orders=Count('id'),
-            distance=Sum('distance_km')
-        ).order_by('-period')
+        grouped = (
+            payouts.annotate(period=trunc_func("created_at"))
+            .values("period")
+            .annotate(
+                earnings=Sum("total_amount"),
+                orders=Count("id"),
+                distance=Sum("distance_km"),
+            )
+            .order_by("-period")
+        )
 
         return list(grouped)
 
@@ -325,14 +325,14 @@ class PerformanceMetricsService:
             deliveries = deliveries.filter(created_at__lte=end_date)
 
         # Calculate average delivery time
-        completed_deliveries = deliveries.filter(status='delivered')
+        completed_deliveries = deliveries.filter(status="delivered")
 
         total_time = timedelta()
         delivery_count = 0
 
         for delivery in completed_deliveries:
             if delivery.delivered_at and delivery.created_at:
-                total_time += (delivery.delivered_at - delivery.created_at)
+                total_time += delivery.delivered_at - delivery.created_at
                 delivery_count += 1
 
         avg_delivery_time_minutes = None
@@ -342,27 +342,40 @@ class PerformanceMetricsService:
         # Calculate success rate
         total_deliveries = deliveries.count()
         successful_deliveries = completed_deliveries.count()
-        success_rate = (successful_deliveries / total_deliveries * 100) if total_deliveries > 0 else 0
+        success_rate = (
+            (successful_deliveries / total_deliveries * 100)
+            if total_deliveries > 0
+            else 0
+        )
 
         # Calculate distance per order
         from warehouses.models import RiderPayout
-        payouts = RiderPayout.objects.filter(rider=rider, status='completed')
+
+        payouts = RiderPayout.objects.filter(rider=rider, status="completed")
 
         if start_date:
             payouts = payouts.filter(created_at__gte=start_date)
         if end_date:
             payouts = payouts.filter(created_at__lte=end_date)
 
-        total_distance = payouts.aggregate(total=Sum('distance_km'))['total'] or Decimal('0.00')
-        distance_per_order = (total_distance / successful_deliveries) if successful_deliveries > 0 else Decimal('0.00')
+        total_distance = payouts.aggregate(total=Sum("distance_km"))[
+            "total"
+        ] or Decimal("0.00")
+        distance_per_order = (
+            (total_distance / successful_deliveries)
+            if successful_deliveries > 0
+            else Decimal("0.00")
+        )
 
         return {
-            'average_delivery_time_minutes': round(avg_delivery_time_minutes, 2) if avg_delivery_time_minutes else None,
-            'success_rate': round(success_rate, 2),
-            'total_deliveries': total_deliveries,
-            'successful_deliveries': successful_deliveries,
-            'distance_per_order': float(distance_per_order),
-            'total_distance_km': float(total_distance)
+            "average_delivery_time_minutes": round(avg_delivery_time_minutes, 2)
+            if avg_delivery_time_minutes
+            else None,
+            "success_rate": round(success_rate, 2),
+            "total_deliveries": total_deliveries,
+            "successful_deliveries": successful_deliveries,
+            "distance_per_order": float(distance_per_order),
+            "total_distance_km": float(total_distance),
         }
 
     @staticmethod
@@ -376,15 +389,16 @@ class PerformanceMetricsService:
         # Get last 6 months of data
         six_months_ago = timezone.now() - timedelta(days=180)
 
-        deliveries = Delivery.objects.filter(
-            rider=rider.user,
-            created_at__gte=six_months_ago
-        ).annotate(
-            month=TruncMonth('created_at')
-        ).values('month').annotate(
-            total_deliveries=Count('id'),
-            completed=Count('id', filter=Q(status='delivered'))
-        ).order_by('-month')
+        deliveries = (
+            Delivery.objects.filter(rider=rider.user, created_at__gte=six_months_ago)
+            .annotate(month=TruncMonth("created_at"))
+            .values("month")
+            .annotate(
+                total_deliveries=Count("id"),
+                completed=Count("id", filter=Q(status="delivered")),
+            )
+            .order_by("-month")
+        )
 
         return list(deliveries)
 
@@ -404,7 +418,7 @@ class NotificationService:
             notification_type=notification_type,
             title=title,
             message=message,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         # TODO: Integrate with Supabase Edge Functions for push notifications
@@ -419,10 +433,10 @@ class NotificationService:
         """
         return NotificationService.create_notification(
             rider=rider,
-            notification_type='order_assigned',
-            title='New Order Assigned',
-            message=f'You have been assigned order #{order.id}',
-            metadata={'order_id': order.id}
+            notification_type="order_assigned",
+            title="New Order Assigned",
+            message=f"You have been assigned order #{order.id}",
+            metadata={"order_id": order.id},
         )
 
     @staticmethod
@@ -432,9 +446,8 @@ class NotificationService:
         """
         return NotificationService.create_notification(
             rider=rider,
-            notification_type='order_update',
-            title='Order Status Updated',
-            message=f'Order #{order.id} status changed to {status}',
-            metadata={'order_id': order.id, 'status': status}
+            notification_type="order_update",
+            title="Order Status Updated",
+            message=f"Order #{order.id} status changed to {status}",
+            metadata={"order_id": order.id, "status": status},
         )
-

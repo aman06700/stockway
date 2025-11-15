@@ -15,7 +15,7 @@ class Notification(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="user_notifications",
-        db_index=True
+        db_index=True,
     )
     title = models.CharField(max_length=255)
     message = models.TextField()
@@ -33,4 +33,3 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.user.email} - {self.created_at}"
-

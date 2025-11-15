@@ -7,6 +7,7 @@ class PaymentAdmin(admin.ModelAdmin):
     """
     Admin interface for Payment model.
     """
+
     list_display = [
         "id",
         "order",
@@ -67,6 +68,7 @@ class PayoutAdmin(admin.ModelAdmin):
     """
     Admin interface for Payout model.
     """
+
     list_display = [
         "id",
         "rider",

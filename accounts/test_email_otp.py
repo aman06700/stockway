@@ -124,13 +124,20 @@ class EmailOTPAuthenticationTest(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn("error", response.data)
 
+    @patch("core.authentication.SupabaseAuthentication._verify_jwt_token")
     @patch("core.services.SupabaseService.get_user")
-    def test_authenticated_request(self, mock_get_user):
+    def test_authenticated_request(self, mock_get_user, mock_verify_jwt):
         """Test making authenticated request with access token"""
         # Create a test user
         user = User.objects.create(
             email=self.email, supabase_uid="supabase-user-123", is_active=True
         )
+
+        # Mock JWT verification to return valid payload
+        mock_verify_jwt.return_value = {
+            "sub": "supabase-user-123",
+            "email": self.email,
+        }
 
         # Mock Supabase user verification
         mock_user_data = MagicMock()
@@ -148,14 +155,21 @@ class EmailOTPAuthenticationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["email"], self.email)
 
+    @patch("core.authentication.SupabaseAuthentication._verify_jwt_token")
     @patch("core.services.SupabaseService.sign_out")
     @patch("core.services.SupabaseService.get_user")
-    def test_logout(self, mock_get_user, mock_sign_out):
+    def test_logout(self, mock_get_user, mock_sign_out, mock_verify_jwt):
         """Test logout functionality"""
         # Create a test user
         user = User.objects.create(
             email=self.email, supabase_uid="supabase-user-123", is_active=True
         )
+
+        # Mock JWT verification to return valid payload
+        mock_verify_jwt.return_value = {
+            "sub": "supabase-user-123",
+            "email": self.email,
+        }
 
         # Mock Supabase user verification
         mock_user_data = MagicMock()

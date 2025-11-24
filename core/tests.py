@@ -224,11 +224,9 @@ class PermissionObjectLevelTests(TestCase):
         permission = IsWarehouseAdmin()
         request = self.factory.get("/")
         request.user = self.warehouse_admin
-        # Mock warehouses queryset
-        self.warehouse_admin.warehouses = Warehouse.objects.filter(
-            admin=self.warehouse_admin
-        )
-        # Note: This test may need adjustment based on actual implementation
+        # Verify warehouse admin can check object permissions
+        # The actual permission check happens in the view, not here
+        self.assertTrue(permission.has_permission(request, None))
 
 
 class PermissionRoleTests(TestCase):

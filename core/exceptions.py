@@ -162,6 +162,13 @@ def custom_exception_handler(exc, context):
             if response.status_code in [401, 403]:
                 logger.warning(f"Access denied: {response.status_code}", extra=log_data)
 
+            # Convert 403 to 401 for unauthenticated users
+            # This ensures consistency: unauthenticated = 401, unauthorized = 403
+            if response.status_code == 403 and request and (not hasattr(request, "user") or not request.user or not request.user.is_authenticated):
+                response.status_code = 401
+                if isinstance(response.data, dict) and "detail" in response.data:
+                    response.data["detail"] = "Authentication credentials were not provided."
+
             # Standardize error format
             if isinstance(response.data, dict):
                 # Check if already in standard format

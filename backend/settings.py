@@ -144,6 +144,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
 
+# Detect if running tests
+import sys
+TESTING = "test" in sys.argv
+
 # REST Framework Configuration
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -160,7 +164,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": [
         "core.throttling.StandardUserThrottle",
         "core.throttling.StandardAnonThrottle",
-    ],
+    ] if not TESTING else [],  # Disable throttling during tests
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/day",
         "user": "1000/day",
@@ -216,9 +220,6 @@ if USE_SUPABASE_DB:
 # TEST DATABASE OVERRIDE
 # ===========================
 # When running tests, override database to use local PostgreSQL instead of Supabase
-import sys
-
-TESTING = "test" in sys.argv
 
 if TESTING and Config.TEST_DATABASE_URL:
     # Parse the TEST_DATABASE_URL to extract connection details

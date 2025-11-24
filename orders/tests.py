@@ -54,13 +54,13 @@ class OrderModelTests(TestCase):
 
     def test_order_total_amount_non_negative_constraint(self):
         """Test that total_amount cannot be negative"""
-        order = Order.objects.create(
-            shopkeeper=self.shopkeeper,
-            warehouse=self.warehouse,
-            total_amount=Decimal("-100.00"),
-        )
-        # This should fail at database constraint level
-        # Note: Test may need database-specific handling
+        from django.db import IntegrityError
+        with self.assertRaises(IntegrityError):
+            Order.objects.create(
+                shopkeeper=self.shopkeeper,
+                warehouse=self.warehouse,
+                total_amount=Decimal("-100.00")
+            )
 
     def test_order_string_representation(self):
         """Test order string representation"""

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend API Documentation</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="brand">
+            <div class="brand-logo"></div>
+            <div class="brand-title">Backend API</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#intro">Overview</a></li>
+            <li><a href="#auth">Authentication</a></li>
+            <li><a href="#shopkeeper">Shopkeeper</a></li>
+            <li><a href="#warehouse">Warehouse</a></li>
+            <li><a href="#rider">Rider</a></li>
+            <li><a href="#orders">Orders</a></li>
+            <li><a href="#payments">Payments</a></li>
+            <li><a href="#notifications">Notifications</a></li>
+            <li><a href="#analytics">Analytics</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <section id="intro">
+            <h1>Backend API Documentation</h1>
+            <p>Welcome to the GEMINI platform API documentation. This API powers interactions between Shopkeepers,
+                Warehouses, and Riders, providing a robust backend for rural supply and delivery.</p>
+
+            <div
+                style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;">
+                <div
+                    style="display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">Base URL</span>
+                    <code style="background: none; padding: 0;">/api/</code>
+                </div>
+                <div
+                    style="display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">Auth Header</span>
+                    <code style="background: none; padding: 0;">Authorization: Token &lt;your_token&gt;</code>
+                </div>
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.9rem;">Content-Type</span>
+                    <code style="background: none; padding: 0;">application/json</code>
+                </div>
+            </div>
+        </section>
+
+        <section id="auth">
+            <h2>Authentication & Accounts</h2>
+            <p>Manage user sessions and profiles. All authenticated endpoints require a valid token.</p>
+            <p style="margin-bottom: 2rem;"><strong>Base URL:</strong> <code>/api/accounts/</code></p>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="url">/send-otp/</span>
+                </div>
+                <h3>Send OTP</h3>
+                <p>Generates and sends a One-Time Password to the provided mobile number.</p>
+                <pre><code>{
+  "phone_number": "+1234567890"
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="url">/verify-otp/</span>
+                </div>
+                <h3>Verify OTP</h3>
+                <p>Verifies the OTP and returns an authentication token.</p>
+                <pre><code>{
+  "phone_number": "+1234567890",
+  "otp": "123456"
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="url">/me/</span>
+                </div>
+                <h3>Current User</h3>
+                <p>Retrieve details of the currently authenticated user.</p>
+            </div>
+        </section>
+
+        <section id="shopkeeper">
+            <h2>Shopkeeper API</h2>
+            <p>Endpoints for shopkeepers to manage orders and browse inventory.</p>
+            <p style="margin-bottom: 2rem;"><strong>Base URL:</strong> <code>/api/shopkeepers/</code></p>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="url">/orders/create/</span>
+                </div>
+                <h3>Create Order</h3>
+                <p>Place a new order from a specific warehouse.</p>
+                <pre><code>{
+  "warehouse": 1,
+  "items": [
+    { "item_id": 101, "quantity": 5 }
+  ]
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="url">/orders/</span>
+                </div>
+                <h3>List Orders</h3>
+                <p>Retrieve a history of all orders placed by the shopkeeper.</p>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="url">/warehouses/nearby/</span>
+                </div>
+                <h3>Nearby Warehouses</h3>
+                <p>Find warehouses within a specific radius of the shopkeeper's location.</p>
+                <div style="margin-top: 1rem;">
+                    <span
+                        style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">Query
+                        Parameters</span>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <code>lat</code> <code>lng</code> <code>radius</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="warehouse">
+            <h2>Warehouse API</h2>
+            <p>Management endpoints for warehouse administrators.</p>
+            <p style="margin-bottom: 2rem;"><strong>Base URL:</strong> <code>/api/warehouses/</code></p>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="url">/&lt;id&gt;/</span>
+                </div>
+                <h3>Warehouse Detail</h3>
+                <p>Get detailed information about a specific warehouse.</p>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="url">/&lt;id&gt;/assign_rider/</span>
+                </div>
+                <h3>Assign Rider</h3>
+                <p>Manually assign a rider to a specific order.</p>
+                <pre><code>{
+  "order_id": 501,
+  "rider_id": 20
+}</code></pre>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="url">/&lt;id&gt;/analytics/summary/</span>
+                </div>
+                <h3>Analytics Summary</h3>
+                <p>Get a performance summary including revenue and order counts.</p>
+            </div>
+        </section>
+
+        <section id="rider">
+            <h2>Rider API</h2>
+            <p>Endpoints for delivery riders to manage their profile and status.</p>
+            <p style="margin-bottom: 2rem;"><strong>Base URL:</strong> <code>/api/riders/</code></p>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="url">/rider/profile/</span>
+                </div>
+                <h3>Rider Profile</h3>
+                <p>Get current rider profile and earnings status.</p>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="url">/rider/location/update/</span>
+                </div>
+                <h3>Update Location</h3>
+                <p>Update the rider's real-time geospatial location.</p>
+                <pre><code>{
+  "latitude": 12.9716,
+  "longitude": 77.5946
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="orders">
+            <h2>Orders API</h2>
+            <p>Shared endpoints for order lifecycle management.</p>
+            <p style="margin-bottom: 2rem;"><strong>Base URL:</strong> <code>/api/orders/</code></p>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="url">/warehouse/orders/&lt;id&gt;/accept/</span>
+                </div>
+                <h3>Accept Order</h3>
+                <p>Accept a pending order at the warehouse level.</p>
+            </div>
+        </section>
+
+        <section id="payments">
+            <h2>Payments API</h2>
+            <p>Handle payouts and transaction records.</p>
+            <p style="margin-bottom: 2rem;"><strong>Base URL:</strong> <code>/api/payments/</code></p>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="url">/payouts/process/</span>
+                </div>
+                <h3>Process Payouts</h3>
+                <p>Trigger payout processing for completed orders.</p>
+                <pre><code>{
+  "order_ids": [501, 502]
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="notifications">
+            <h2>Notifications API</h2>
+            <p>System-wide notifications for all user roles.</p>
+            <p style="margin-bottom: 2rem;"><strong>Base URL:</strong> <code>/api/notifications/</code></p>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="url">/</span>
+                </div>
+                <h3>List Notifications</h3>
+                <p>Get a paginated list of notifications for the current user.</p>
+            </div>
+        </section>
+
+        <section id="analytics">
+            <h2>Analytics API</h2>
+            <p>Data aggregation endpoints for dashboards.</p>
+            <p style="margin-bottom: 2rem;"><strong>Base URL:</strong> <code>/api/analytics/</code></p>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="url">/system/</span>
+                </div>
+                <h3>System Analytics</h3>
+                <p>Get high-level system metrics (Super Admin only).</p>
+                <div style="margin-top: 1rem;">
+                    <span
+                        style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">Query
+                        Parameters</span>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <code>date</code> <code>days</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>

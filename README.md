@@ -1,8 +1,8 @@
-# GEMINI Backend
+# API Backend
 
 ## Project Overview
 
-GEMINI is a robust, modular monolithic backend built with Django and Django REST Framework (DRF). It serves as the core infrastructure for a rural supply and delivery platform, connecting Shopkeepers, Warehouses, and Riders. The system handles order management, inventory tracking, geospatial delivery assignments, and automated payouts.
+API is a robust, modular monolithic backend built with Django and Django REST Framework (DRF). It serves as the core infrastructure for a rural supply and delivery platform, connecting Shopkeepers, Warehouses, and Riders. The system handles order management, inventory tracking, geospatial delivery assignments, and automated payouts.
 
 ## Core Features
 
@@ -109,7 +109,7 @@ The application is Docker-ready and can be deployed to platforms like Render, Ra
 
 1.  **Build Docker Image**
     ```bash
-    docker build -t gemini-backend .
+    docker build -t backend .
     ```
 
 2.  **Run Container**

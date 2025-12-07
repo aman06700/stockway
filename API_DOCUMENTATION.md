@@ -1,7 +1,7 @@
-# GEMINI API Documentation
+# API Documentation
 
 ## Overview
-This API powers the GEMINI platform, facilitating interactions between Shopkeepers, Warehouses, and Riders.
+This API powers the Backend platform, facilitating interactions between Shopkeepers, Warehouses, and Riders.
 
 **Base URL:** `/api/`
 **Authentication:** Token-based (Header: `Authorization: Token <your_token>`)

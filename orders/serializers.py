@@ -37,11 +37,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
     """Serializer for order items in responses"""
 
     item_name = serializers.CharField(source="item.name", read_only=True)
-    item_sku = serializers.CharField(source="item.sku", read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ["id", "item", "item_name", "item_sku", "quantity", "price"]
+        fields = ["id", "item", "item_name", "quantity", "price"]
         read_only_fields = ["id", "price"]
 
 

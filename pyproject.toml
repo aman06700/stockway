@@ -26,6 +26,7 @@ dependencies = [
     "django-silk==5.4.3",
     "djangorestframework==3.16.1",
     "djangorestframework-gis==1.2.0",
+    "djangorestframework-stubs>=3.16.6",
     "factory-boy==3.3.3",
     "faker==38.2.0",
     "gprof2dot==2025.4.14",

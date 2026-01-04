@@ -11,7 +11,6 @@ class OrderItemDetailSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     item = serializers.IntegerField(read_only=True)
     item_name = serializers.CharField(read_only=True)
-    item_sku = serializers.CharField(read_only=True)
     quantity = serializers.IntegerField(read_only=True)
     price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 

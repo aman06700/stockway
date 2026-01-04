@@ -145,7 +145,14 @@ class SupabaseAuthentication(BaseAuthentication):
 
         try:
             # Try to find user by supabase_uid (indexed field)
-            user = User.objects.get(supabase_uid=supabase_uid)
+            # Use all_objects to include soft-deleted users for proper error handling
+            user = User.all_objects.get(supabase_uid=supabase_uid)
+
+            # Check if user is soft-deleted
+            if user.is_deleted:
+                logger.warning(f"Soft-deleted user attempted authentication: {supabase_uid}")
+                raise AuthenticationFailed("User account has been deleted")
+
             logger.debug(f"Found existing user: {supabase_uid}")
         except User.DoesNotExist:
             # Prevent user creation without email or phone

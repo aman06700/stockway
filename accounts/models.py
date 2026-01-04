@@ -7,8 +7,14 @@ from django.contrib.gis.db import models
 from django.utils import timezone
 
 
-class UserManager(BaseUserManager):
-    """Custom user manager for email-based authentication"""
+class ActiveUserManager(BaseUserManager):
+    """
+    Manager that returns only active (non-deleted) users by default.
+    Used as the default manager for most queries.
+    """
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True, deleted_at__isnull=True)
 
     def create_user(self, email=None, phone_number=None, password=None, **extra_fields):
         """Create and save a regular user with email"""
@@ -34,7 +40,52 @@ class UserManager(BaseUserManager):
         """Create and save a superuser with email"""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("role", "ADMIN")
+        # extra_fields.setdefault("role", "ADMIN")
+
+        if not extra_fields.get("is_staff"):
+            raise ValueError("Superuser must have is_staff=True.")
+        if not extra_fields.get("is_superuser"):
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return self.create_user(
+            email=email, phone_number=phone_number, password=password, **extra_fields
+        )
+
+
+class UserManager(BaseUserManager):
+    """
+    Manager that returns ALL users including soft-deleted ones.
+    Use this for admin views and historical data queries.
+    """
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+    def create_user(self, email=None, phone_number=None, password=None, **extra_fields):
+        """Create and save a regular user with email"""
+        if not email and not phone_number:
+            raise ValueError("Either email or phone number must be set")
+
+        if email:
+            email = self.normalize_email(email)
+
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+
+        user = self.model(email=email, phone_number=phone_number, **extra_fields)
+        if password:
+            user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(
+        self, email=None, phone_number=None, password=None, **extra_fields
+    ):
+        """Create and save a superuser with email"""
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        # extra_fields.setdefault("role", "ADMIN")
 
         if not extra_fields.get("is_staff"):
             raise ValueError("Superuser must have is_staff=True.")
@@ -73,7 +124,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(null=True, blank=True)
 
-    objects = UserManager()
+    # Soft delete field
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    # Managers
+    objects = ActiveUserManager()  # Default manager - excludes soft-deleted users
+    all_objects = UserManager()    # Includes all users for admin/historical queries
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -91,6 +147,72 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.email
+
+    @property
+    def is_deleted(self):
+        """Check if user has been soft deleted"""
+        return self.deleted_at is not None
+
+    def soft_delete(self):
+        """
+        Soft delete the user by setting is_active=False and deleted_at timestamp.
+        Does not actually remove the database record.
+        """
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        self.save(update_fields=["is_active", "deleted_at"])
+
+    def restore(self):
+        """
+        Restore a soft-deleted user by clearing deleted_at and setting is_active=True.
+        """
+        self.is_active = True
+        self.deleted_at = None
+        self.save(update_fields=["is_active", "deleted_at"])
+
+    def has_dependent_data(self):
+        """
+        Check if user has any dependent business data that would prevent hard deletion.
+        Returns tuple of (has_dependencies, details_dict)
+        """
+        dependencies = {}
+
+        # Check for warehouses (if user is warehouse admin)
+        if hasattr(self, 'warehouses'):
+            warehouse_count = self.warehouses.count()
+            if warehouse_count > 0:
+                dependencies['warehouses'] = warehouse_count
+
+        # Check for orders (as shopkeeper)
+        if hasattr(self, 'orders'):
+            order_count = self.orders.count()
+            if order_count > 0:
+                dependencies['orders'] = order_count
+
+        # Check for shopkeeper profile
+        if hasattr(self, 'shopkeeper_profile'):
+            try:
+                if self.shopkeeper_profile:
+                    dependencies['shopkeeper_profile'] = 1
+            except ShopkeeperProfile.DoesNotExist:
+                pass
+
+        # Check for deliveries (as rider)
+        if hasattr(self, 'deliveries'):
+            delivery_count = self.deliveries.count()
+            if delivery_count > 0:
+                dependencies['deliveries'] = delivery_count
+
+        # Check for rider profile
+        if hasattr(self, 'rider_profile'):
+            try:
+                from riders.models import RiderProfile
+                if self.rider_profile:
+                    dependencies['rider_profile'] = 1
+            except:
+                pass
+
+        return (len(dependencies) > 0, dependencies)
 
 
 class ShopkeeperProfile(models.Model):

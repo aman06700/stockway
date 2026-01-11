@@ -505,17 +505,17 @@ class SoftDeleteModelTests(TestCase):
 
     def test_has_dependent_data_with_shopkeeper_profile(self):
         """Test has_dependent_data detects shopkeeper profile"""
-        user = User.objects.create_user(email="shopkeeper@example.com", role="SHOPKEEPER")
+        user = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
         ShopkeeperProfile.objects.create(
-            user=user,
-            shop_name="Test Shop",
-            shop_address="123 Test St"
+            user=user, shop_name="Test Shop", shop_address="123 Test St"
         )
 
         has_deps, deps = user.has_dependent_data()
 
         self.assertTrue(has_deps)
-        self.assertIn('shopkeeper_profile', deps)
+        self.assertIn("shopkeeper_profile", deps)
 
 
 class AdminUserDeactivateViewTests(APITestCase):
@@ -523,12 +523,10 @@ class AdminUserDeactivateViewTests(APITestCase):
 
     def setUp(self):
         self.admin = User.objects.create_superuser(
-            email="admin@example.com",
-            password="adminpass123"
+            email="admin@example.com", password="adminpass123"
         )
         self.regular_user = User.objects.create_user(
-            email="regular@example.com",
-            role="SHOPKEEPER"
+            email="regular@example.com", role="SHOPKEEPER"
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.admin)
@@ -549,7 +547,9 @@ class AdminUserDeactivateViewTests(APITestCase):
     def test_deactivate_user_with_reason(self):
         """Test user deactivation with reason"""
         url = f"/api/accounts/admin/users/{self.regular_user.id}/deactivate/"
-        response = self.client.post(url, {"reason": "Violated terms of service"}, format="json")
+        response = self.client.post(
+            url, {"reason": "Violated terms of service"}, format="json"
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data["success"])
@@ -595,12 +595,10 @@ class AdminUserRestoreViewTests(APITestCase):
 
     def setUp(self):
         self.admin = User.objects.create_superuser(
-            email="admin@example.com",
-            password="adminpass123"
+            email="admin@example.com", password="adminpass123"
         )
         self.deleted_user = User.objects.create_user(
-            email="deleted@example.com",
-            role="SHOPKEEPER"
+            email="deleted@example.com", role="SHOPKEEPER"
         )
         self.deleted_user.soft_delete()
         self.client = APIClient()
@@ -645,12 +643,10 @@ class AdminUserHardDeleteViewTests(APITestCase):
 
     def setUp(self):
         self.admin = User.objects.create_superuser(
-            email="admin@example.com",
-            password="adminpass123"
+            email="admin@example.com", password="adminpass123"
         )
         self.regular_user = User.objects.create_user(
-            email="regular@example.com",
-            role="SHOPKEEPER"
+            email="regular@example.com", role="SHOPKEEPER"
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.admin)
@@ -683,9 +679,7 @@ class AdminUserHardDeleteViewTests(APITestCase):
         """Test hard delete is blocked when user has dependent data"""
         # Create shopkeeper profile to create dependency
         ShopkeeperProfile.objects.create(
-            user=self.regular_user,
-            shop_name="Test Shop",
-            shop_address="123 Test St"
+            user=self.regular_user, shop_name="Test Shop", shop_address="123 Test St"
         )
 
         url = f"/api/accounts/admin/users/{self.regular_user.id}/delete/"
@@ -719,16 +713,13 @@ class AdminUserListViewTests(APITestCase):
 
     def setUp(self):
         self.admin = User.objects.create_superuser(
-            email="admin@example.com",
-            password="adminpass123"
+            email="admin@example.com", password="adminpass123"
         )
         self.active_user = User.objects.create_user(
-            email="active@example.com",
-            role="SHOPKEEPER"
+            email="active@example.com", role="SHOPKEEPER"
         )
         self.deleted_user = User.objects.create_user(
-            email="deleted@example.com",
-            role="RIDER"
+            email="deleted@example.com", role="RIDER"
         )
         self.deleted_user.soft_delete()
 
@@ -775,8 +766,7 @@ class DeactivatedUserAuthenticationTests(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            email="test@example.com",
-            supabase_uid="test-supabase-uid"
+            email="test@example.com", supabase_uid="test-supabase-uid"
         )
         self.client = APIClient()
 
@@ -822,13 +812,10 @@ class RelatedDataIntegrityTests(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            email="shopkeeper@example.com",
-            role="SHOPKEEPER"
+            email="shopkeeper@example.com", role="SHOPKEEPER"
         )
         self.profile = ShopkeeperProfile.objects.create(
-            user=self.user,
-            shop_name="Test Shop",
-            shop_address="123 Test St"
+            user=self.user, shop_name="Test Shop", shop_address="123 Test St"
         )
 
     def test_soft_delete_preserves_related_data(self):
@@ -856,4 +843,3 @@ class RelatedDataIntegrityTests(TestCase):
         # Profile should still be linked
         self.assertEqual(self.user.shopkeeper_profile.id, self.profile.id)
         self.assertEqual(self.user.shopkeeper_profile.shop_name, "Test Shop")
-

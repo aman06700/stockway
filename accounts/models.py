@@ -121,6 +121,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 
+    profile_image_url = models.TextField(null=True, blank=True)
+
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(null=True, blank=True)
 
@@ -129,7 +131,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # Managers
     objects = ActiveUserManager()  # Default manager - excludes soft-deleted users
-    all_objects = UserManager()    # Includes all users for admin/historical queries
+    all_objects = UserManager()  # Includes all users for admin/historical queries
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -178,37 +180,38 @@ class User(AbstractBaseUser, PermissionsMixin):
         dependencies = {}
 
         # Check for warehouses (if user is warehouse admin)
-        if hasattr(self, 'warehouses'):
+        if hasattr(self, "warehouses"):
             warehouse_count = self.warehouses.count()
             if warehouse_count > 0:
-                dependencies['warehouses'] = warehouse_count
+                dependencies["warehouses"] = warehouse_count
 
         # Check for orders (as shopkeeper)
-        if hasattr(self, 'orders'):
+        if hasattr(self, "orders"):
             order_count = self.orders.count()
             if order_count > 0:
-                dependencies['orders'] = order_count
+                dependencies["orders"] = order_count
 
         # Check for shopkeeper profile
-        if hasattr(self, 'shopkeeper_profile'):
+        if hasattr(self, "shopkeeper_profile"):
             try:
                 if self.shopkeeper_profile:
-                    dependencies['shopkeeper_profile'] = 1
+                    dependencies["shopkeeper_profile"] = 1
             except ShopkeeperProfile.DoesNotExist:
                 pass
 
         # Check for deliveries (as rider)
-        if hasattr(self, 'deliveries'):
+        if hasattr(self, "deliveries"):
             delivery_count = self.deliveries.count()
             if delivery_count > 0:
-                dependencies['deliveries'] = delivery_count
+                dependencies["deliveries"] = delivery_count
 
         # Check for rider profile
-        if hasattr(self, 'rider_profile'):
+        if hasattr(self, "rider_profile"):
             try:
                 from riders.models import RiderProfile
+
                 if self.rider_profile:
-                    dependencies['rider_profile'] = 1
+                    dependencies["rider_profile"] = 1
             except:
                 pass
 

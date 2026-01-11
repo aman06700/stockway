@@ -18,8 +18,11 @@ django-cors-headers==4.9.0
 django-filter==25.2
 django-redis==6.0.0
 django-silk==5.4.3
+django-stubs==5.2.8
+django-stubs-ext==5.2.8
 djangorestframework==3.16.1
 djangorestframework-gis==1.2.0
+djangorestframework-stubs==3.16.6
 factory-boy==3.3.3
 faker==38.2.0
 gprof2dot==2025.4.14
@@ -60,10 +63,12 @@ strenum==0.4.15
 supabase==2.24.0
 supabase-auth==2.24.0
 supabase-functions==2.24.0
+types-pyyaml==6.0.12.20250915
+types-requests==2.32.4.20260107
 typing-extensions==4.15.0
 typing-inspection==0.4.2
 tzdata==2025.2
-urllib3==2.5.0
+urllib3==2.6.0
 uv==0.9.11
 vine==5.1.0
 wcwidth==0.2.14

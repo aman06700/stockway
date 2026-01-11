@@ -248,6 +248,25 @@ class SupabaseStorage:
         except Exception as e:
             return {"success": False, "error": str(e), "bucket": bucket_name}
 
+    @classmethod
+    def ensure_bucket(cls, bucket_name: str, public: bool = True) -> Dict[str, Any]:
+        """
+        Ensure that a storage bucket exists, creating it if necessary.
+
+        Args:
+            bucket_name: Name of the storage bucket
+            public: Whether the bucket should be publicly accessible
+
+        Returns:
+            Dict with result of the operation
+        """
+        client = cls.get_client()
+        try:
+            client.storage.create_bucket(bucket_name, options={"public": public})
+            return {"success": True, "bucket": bucket_name, "public": public}
+        except Exception as exc:  # bucket may already exist
+            return {"success": False, "error": str(exc), "bucket": bucket_name}
+
 
 # Convenience functions for common use cases
 
@@ -282,3 +301,23 @@ def upload_warehouse_image(warehouse_id: int, image_file) -> Dict[str, Any]:
     return SupabaseStorage.upload_django_file(
         "warehouse-images", filename, image_file, upsert=True
     )
+
+
+def build_item_image_path(warehouse_id: int, item_id: int, filename: str) -> str:
+    """Deterministic path for item images."""
+    return f"{warehouse_id}/{item_id}/{filename}"
+
+
+def delete_item_image(warehouse_id: int, item_id: int, filename: str) -> Dict[str, Any]:
+    """Delete an inventory item image from the 'item-images' bucket."""
+    path = build_item_image_path(warehouse_id, item_id, filename)
+    return SupabaseStorage.delete_file("item-images", path)
+
+
+def upload_item_image(warehouse_id: int, item_id: int, image_file) -> Dict[str, Any]:
+    """Upload an inventory item image to the 'item-images' bucket with overwrite enabled."""
+    filename = build_item_image_path(warehouse_id, item_id, image_file.name)
+    return SupabaseStorage.upload_django_file(
+        "item-images", filename, image_file, upsert=True
+    )
+

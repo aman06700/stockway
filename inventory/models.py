@@ -18,8 +18,11 @@ class Item(models.Model):
     description: str = models.TextField(blank=True)
     category: str = models.CharField(max_length=100, blank=True, default="")
     price: Decimal = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity: int = models.PositiveIntegerField(default=0, db_column="availableQuantity")
+    quantity: int = models.PositiveIntegerField(
+        default=0, db_column="availableQuantity"
+    )
     image_url: str = models.TextField(blank=True, null=True)
+    image_urls: list[str] = models.JSONField(default=list, blank=True, null=True)
     created_at: datetime = models.DateTimeField(auto_now_add=True)
     updated_at: datetime = models.DateTimeField(auto_now=True)
 

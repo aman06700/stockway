@@ -4,20 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('inventory', '0003_remove_item_sku_remove_item_updated_at_item_category_and_more'),
+        (
+            "inventory",
+            "0003_remove_item_sku_remove_item_updated_at_item_category_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='item',
-            name='sku',
+            model_name="item",
+            name="sku",
             field=models.CharField(blank=True, max_length=100, null=True, unique=True),
         ),
         migrations.AddField(
-            model_name='item',
-            name='updated_at',
+            model_name="item",
+            name="updated_at",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

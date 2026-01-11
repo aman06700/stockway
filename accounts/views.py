@@ -221,9 +221,11 @@ class AdminUserListView(APIView):
         - role: str - Filter by role
         - is_active: bool - Filter by active status
         """
-        include_deleted = request.query_params.get('include_deleted', 'false').lower() == 'true'
-        role_filter = request.query_params.get('role', None)
-        is_active_filter = request.query_params.get('is_active', None)
+        include_deleted = (
+            request.query_params.get("include_deleted", "false").lower() == "true"
+        )
+        role_filter = request.query_params.get("role", None)
+        is_active_filter = request.query_params.get("is_active", None)
 
         if include_deleted:
             users = User.all_objects.all()
@@ -234,14 +236,14 @@ class AdminUserListView(APIView):
             users = users.filter(role=role_filter.upper())
 
         if is_active_filter is not None:
-            is_active = is_active_filter.lower() == 'true'
+            is_active = is_active_filter.lower() == "true"
             users = users.filter(is_active=is_active)
 
         serializer = UserAdminSerializer(users, many=True)
-        return Response({
-            "count": users.count(),
-            "users": serializer.data
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {"count": users.count(), "users": serializer.data},
+            status=status.HTTP_200_OK,
+        )
 
 
 class AdminUserDetailView(APIView):
@@ -260,8 +262,7 @@ class AdminUserDetailView(APIView):
             user = User.all_objects.get(id=user_id)
         except User.DoesNotExist:
             return Response(
-                {"error": "User not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         # Get dependency information
@@ -269,8 +270,8 @@ class AdminUserDetailView(APIView):
 
         serializer = UserAdminSerializer(user)
         response_data = serializer.data
-        response_data['has_dependencies'] = has_deps
-        response_data['dependencies'] = deps
+        response_data["has_dependencies"] = has_deps
+        response_data["dependencies"] = deps
 
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -295,52 +296,53 @@ class AdminUserDeactivateView(APIView):
         serializer = UserDeactivateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"error": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
             user = User.all_objects.get(id=user_id)
         except User.DoesNotExist:
             return Response(
-                {"error": "User not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         # Prevent deactivating yourself
         if user.id == request.user.id:
             return Response(
                 {"error": "You cannot deactivate your own account"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Prevent deactivating superusers (unless you're also a superuser)
         if user.is_superuser and not request.user.is_superuser:
             return Response(
                 {"error": "Only superusers can deactivate other superusers"},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Check if already deleted
         if user.is_deleted:
             return Response(
                 {"error": "User is already deactivated"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Perform soft delete
-        reason = serializer.validated_data.get('reason', '')
+        reason = serializer.validated_data.get("reason", "")
         user.soft_delete()
 
         logger.info(
             f"User {user_id} soft-deleted by admin {request.user.id}. Reason: {reason or 'No reason provided'}"
         )
 
-        return Response({
-            "success": True,
-            "message": "User has been deactivated",
-            "user": UserAdminSerializer(user).data
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "success": True,
+                "message": "User has been deactivated",
+                "user": UserAdminSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class AdminUserRestoreView(APIView):
@@ -358,15 +360,13 @@ class AdminUserRestoreView(APIView):
             user = User.all_objects.get(id=user_id)
         except User.DoesNotExist:
             return Response(
-                {"error": "User not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         # Check if actually deleted
         if not user.is_deleted:
             return Response(
-                {"error": "User is not deactivated"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "User is not deactivated"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         # Restore user
@@ -374,11 +374,14 @@ class AdminUserRestoreView(APIView):
 
         logger.info(f"User {user_id} restored by admin {request.user.id}")
 
-        return Response({
-            "success": True,
-            "message": "User has been restored",
-            "user": UserAdminSerializer(user).data
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "success": True,
+                "message": "User has been restored",
+                "user": UserAdminSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class AdminUserHardDeleteView(APIView):
@@ -405,40 +408,41 @@ class AdminUserHardDeleteView(APIView):
         serializer = UserHardDeleteSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"error": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
             user = User.all_objects.get(id=user_id)
         except User.DoesNotExist:
             return Response(
-                {"error": "User not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         # Prevent deleting yourself
         if user.id == request.user.id:
             return Response(
                 {"error": "You cannot delete your own account"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Prevent deleting superusers (unless you're also a superuser)
         if user.is_superuser and not request.user.is_superuser:
             return Response(
                 {"error": "Only superusers can delete other superusers"},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # Check for dependent data
         has_deps, deps = user.has_dependent_data()
         if has_deps:
-            return Response({
-                "error": "Cannot permanently delete user with dependent data. Use soft delete instead.",
-                "dependencies": deps,
-                "suggestion": "Deactivate the user instead of hard deleting"
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "error": "Cannot permanently delete user with dependent data. Use soft delete instead.",
+                    "dependencies": deps,
+                    "suggestion": "Deactivate the user instead of hard deleting",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Store user info for logging
         user_email = user.email
@@ -451,10 +455,10 @@ class AdminUserHardDeleteView(APIView):
             f"User {user_id} ({user_email}, {user_role}) permanently deleted by admin {request.user.id}"
         )
 
-        return Response({
-            "success": True,
-            "message": "User has been permanently deleted"
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {"success": True, "message": "User has been permanently deleted"},
+            status=status.HTTP_200_OK,
+        )
 
 
 class AdminUserDependenciesView(APIView):
@@ -473,19 +477,120 @@ class AdminUserDependenciesView(APIView):
             user = User.all_objects.get(id=user_id)
         except User.DoesNotExist:
             return Response(
-                {"error": "User not found"},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
         has_deps, deps = user.has_dependent_data()
 
-        return Response({
-            "user_id": user_id,
-            "email": user.email,
-            "has_dependencies": has_deps,
-            "dependencies": deps,
-            "can_hard_delete": not has_deps,
-            "recommendation": "soft_delete" if has_deps else "hard_delete_allowed"
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "user_id": user_id,
+                "email": user.email,
+                "has_dependencies": has_deps,
+                "dependencies": deps,
+                "can_hard_delete": not has_deps,
+                "recommendation": "soft_delete" if has_deps else "hard_delete_allowed",
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
+class ProfilePictureUploadView(APIView):
+    """
+    Upload profile picture for the authenticated user.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+    ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+    MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
+    BUCKET_NAME = "profile-pictures"
+
+    def post(self, request):
+        """
+        Upload a profile picture for the authenticated user.
+
+        Request: multipart/form-data with 'image' file field
+        Accepts: jpg, jpeg, png, webp (max 2MB)
+
+        Returns:
+            { "profile_image_url": "<public_url>" }
+        """
+        from configs.supabase_storage import SupabaseStorage
+
+        # Check if file is present
+        if "image" not in request.FILES:
+            return Response(
+                {"error": "No image file provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        image_file = request.FILES["image"]
+
+        # Validate file size
+        if image_file.size > self.MAX_FILE_SIZE:
+            return Response(
+                {
+                    "error": f"File size exceeds maximum allowed size of {self.MAX_FILE_SIZE // (1024 * 1024)}MB"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate content type
+        if image_file.content_type not in self.ALLOWED_CONTENT_TYPES:
+            return Response(
+                {
+                    "error": f"Invalid file type. Allowed types: {', '.join(self.ALLOWED_EXTENSIONS)}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get file extension from content type
+        ext_map = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "image/webp": "webp",
+        }
+        file_ext = ext_map.get(image_file.content_type, "jpg")
+
+        # Construct deterministic file path: profile-pictures/{user_id}/profile.{ext}
+        user = request.user
+        file_path = f"{user.id}/profile.{file_ext}"
+
+        try:
+            # Upload to Supabase Storage with upsert to overwrite existing
+            result = SupabaseStorage.upload_django_file(
+                bucket_name=self.BUCKET_NAME,
+                file_path=file_path,
+                django_file=image_file,
+                upsert=True,
+            )
+
+            if not result.get("success"):
+                logger.error(
+                    f"Failed to upload profile picture for user {user.id}: {result.get('error')}"
+                )
+                return Response(
+                    {"error": "Failed to upload image"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            # Update user's profile_image_url
+            public_url = result.get("url")
+            user.profile_image_url = public_url
+            user.save(update_fields=["profile_image_url"])
+
+            logger.info(f"Profile picture uploaded successfully for user {user.id}")
+
+            return Response(
+                {"profile_image_url": public_url}, status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Error uploading profile picture for user {user.id}: {str(e)}"
+            )
+            return Response(
+                {"error": "Failed to upload image"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

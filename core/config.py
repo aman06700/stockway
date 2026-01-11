@@ -23,6 +23,7 @@ class Config:
     SUPABASE_URL = os.getenv("SUPABASE_URL")
     SUPABASE_KEY = os.getenv("SUPABASE_KEY")
     SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or SUPABASE_SERVICE_ROLE_KEY
     SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 
     # Optional: Supabase Managed Postgres

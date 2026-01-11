@@ -4,37 +4,36 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('inventory', '0002_initial'),
+        ("inventory", "0002_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='item',
-            name='sku',
+            model_name="item",
+            name="sku",
         ),
         migrations.RemoveField(
-            model_name='item',
-            name='updated_at',
+            model_name="item",
+            name="updated_at",
         ),
         migrations.AddField(
-            model_name='item',
-            name='category',
-            field=models.CharField(blank=True, default='', max_length=100),
+            model_name="item",
+            name="category",
+            field=models.CharField(blank=True, default="", max_length=100),
         ),
         migrations.AddField(
-            model_name='item',
-            name='image_url',
+            model_name="item",
+            name="image_url",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='item',
-            name='quantity',
-            field=models.PositiveIntegerField(db_column='availableQuantity', default=0),
+            model_name="item",
+            name="quantity",
+            field=models.PositiveIntegerField(db_column="availableQuantity", default=0),
         ),
         migrations.AlterModelTable(
-            name='item',
-            table='inventory_item',
+            name="item",
+            table="inventory_item",
         ),
     ]

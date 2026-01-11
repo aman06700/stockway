@@ -150,7 +150,9 @@ class SupabaseAuthentication(BaseAuthentication):
 
             # Check if user is soft-deleted
             if user.is_deleted:
-                logger.warning(f"Soft-deleted user attempted authentication: {supabase_uid}")
+                logger.warning(
+                    f"Soft-deleted user attempted authentication: {supabase_uid}"
+                )
                 raise AuthenticationFailed("User account has been deleted")
 
             logger.debug(f"Found existing user: {supabase_uid}")

@@ -52,6 +52,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "date_joined",
             "last_login",
+            "profile_image_url",
         ]
         read_only_fields = ["id", "date_joined", "last_login"]
 
@@ -61,6 +62,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
     Serializer for admin user management.
     Includes soft delete status and all user details.
     """
+
     is_deleted = serializers.BooleanField(read_only=True)
 
     class Meta:
@@ -76,30 +78,39 @@ class UserAdminSerializer(serializers.ModelSerializer):
             "deleted_at",
             "date_joined",
             "last_login",
+            "profile_image_url",
         ]
-        read_only_fields = ["id", "date_joined", "last_login", "deleted_at", "is_deleted"]
+        read_only_fields = [
+            "id",
+            "date_joined",
+            "last_login",
+            "deleted_at",
+            "is_deleted",
+        ]
 
 
 class UserDeactivateSerializer(serializers.Serializer):
     """Serializer for user deactivation (soft delete)"""
+
     reason = serializers.CharField(
         max_length=500,
         required=False,
         allow_blank=True,
-        help_text="Optional reason for deactivation"
+        help_text="Optional reason for deactivation",
     )
 
 
 class UserRestoreSerializer(serializers.Serializer):
     """Serializer for restoring a soft-deleted user"""
+
     pass
 
 
 class UserHardDeleteSerializer(serializers.Serializer):
     """Serializer for hard delete confirmation"""
+
     confirm = serializers.BooleanField(
-        required=True,
-        help_text="Must be true to confirm permanent deletion"
+        required=True, help_text="Must be true to confirm permanent deletion"
     )
 
     def validate_confirm(self, value):

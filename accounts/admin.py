@@ -25,21 +25,18 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ["phone_number", "full_name", "email"]
     ordering = ["-date_joined"]
 
-    actions = ['soft_delete_users', 'restore_users']
+    actions = ["soft_delete_users", "restore_users"]
 
     def deletion_status(self, obj):
         """Display deletion status with color coding"""
         if obj.deleted_at:
             return format_html(
                 '<span style="color: {}; font-weight: bold;">{}</span>',
-                'red',
-                'Deleted'
+                "red",
+                "Deleted",
             )
-        return format_html(
-            '<span style="color: {};">{}</span>',
-            'green',
-            'Active'
-        )
+        return format_html('<span style="color: {};">{}</span>', "green", "Active")
+
     deletion_status.short_description = "Status"
 
     fieldsets = (

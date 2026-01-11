@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 """Script to create test data and a dummy order via API"""
+
 import os
 import sys
 import requests
 
 # Setup Django
-sys.path.insert(0, '/home/granth/PycharmProjects/backend')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+sys.path.insert(0, "/home/granth/PycharmProjects/backend")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 
 import django
+
 django.setup()
 
 from django.db import connection
@@ -18,6 +20,7 @@ from warehouses.models import Warehouse
 
 BASE_URL = "http://localhost:8000"
 
+
 def create_test_data():
     """Create warehouse and inventory items for testing"""
     print("=== Creating Test Data ===")
@@ -25,10 +28,7 @@ def create_test_data():
     # Get or create warehouse admin
     admin, created = User.objects.get_or_create(
         email="warehouse_admin@test.com",
-        defaults={
-            "is_active": True,
-            "supabase_uid": "test-warehouse-admin-uid-001"
-        }
+        defaults={"is_active": True, "supabase_uid": "test-warehouse-admin-uid-001"},
     )
     print(f"Warehouse Admin: {admin.email} (ID: {admin.id}, created: {created})")
 
@@ -41,8 +41,8 @@ def create_test_data():
             "location": Point(77.5946, 12.9716, srid=4326),
             "admin": admin,
             "is_active": True,
-            "is_approved": True
-        }
+            "is_approved": True,
+        },
     )
     print(f"Warehouse: {warehouse.name} (ID: {warehouse.id}, created: {created})")
 
@@ -64,19 +64,43 @@ def create_test_data():
 
             # Insert items based on actual table structure
             items = [
-                ("Rice 5kg", "RICE-5KG-001", "Premium Basmati Rice 5kg pack", "Groceries", 250.00, 100),
-                ("Sugar 1kg", "SUGAR-1KG-001", "Refined Sugar 1kg pack", "Groceries", 45.00, 200),
-                ("Cooking Oil 1L", "OIL-1L-001", "Sunflower Cooking Oil 1 Liter", "Groceries", 150.00, 50),
+                (
+                    "Rice 5kg",
+                    "RICE-5KG-001",
+                    "Premium Basmati Rice 5kg pack",
+                    "Groceries",
+                    250.00,
+                    100,
+                ),
+                (
+                    "Sugar 1kg",
+                    "SUGAR-1KG-001",
+                    "Refined Sugar 1kg pack",
+                    "Groceries",
+                    45.00,
+                    200,
+                ),
+                (
+                    "Cooking Oil 1L",
+                    "OIL-1L-001",
+                    "Sunflower Cooking Oil 1 Liter",
+                    "Groceries",
+                    150.00,
+                    50,
+                ),
             ]
 
             for name, sku, desc, category, price, qty in items:
                 try:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT INTO inventory_item (name, sku, description, category, price, "availableQuantity", created_at)
                         VALUES (%s, %s, %s, %s, %s, %s, NOW())
                         ON CONFLICT (sku) DO NOTHING
                         RETURNING id
-                    """, [name, sku, desc, category, price, qty])
+                    """,
+                        [name, sku, desc, category, price, qty],
+                    )
                     result = cursor.fetchone()
                     if result:
                         print(f"  Created item: {name} (ID: {result[0]})")
@@ -95,14 +119,16 @@ def create_test_data():
 
     return warehouse.id, items
 
+
 def get_token():
     """Read saved token from file"""
     try:
-        with open('/tmp/test_token.txt', 'r') as f:
+        with open("/tmp/test_token.txt", "r") as f:
             return f.read().strip()
     except FileNotFoundError:
         print("ERROR: No token found. Please authenticate first.")
         return None
+
 
 def create_order(warehouse_id, items, token):
     """Create order via API"""
@@ -119,17 +145,11 @@ def create_order(warehouse_id, items, token):
     if len(items) > 1:
         order_items.append({"item_id": items[1][0], "quantity": 3})  # 3x second item
 
-    payload = {
-        "warehouse": warehouse_id,
-        "items": order_items
-    }
+    payload = {"warehouse": warehouse_id, "items": order_items}
 
     print(f"Order payload: {payload}")
 
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
     # Try shopkeeper order create endpoint
     url = f"{BASE_URL}/api/shopkeepers/orders/create/"
@@ -150,6 +170,7 @@ def create_order(warehouse_id, items, token):
         print(f"\n❌ Failed to create order")
         return None
 
+
 def main():
     print("=" * 50)
     print("Creating Dummy Order Through API")
@@ -162,7 +183,9 @@ def main():
     token = get_token()
     if not token:
         print("\nTo authenticate, run:")
-        print("  1. Send OTP: curl -X POST http://localhost:8000/api/accounts/send-otp/ -H 'Content-Type: application/json' -d '{\"email\":\"granthtests@gmail.com\"}'")
+        print(
+            "  1. Send OTP: curl -X POST http://localhost:8000/api/accounts/send-otp/ -H 'Content-Type: application/json' -d '{\"email\":\"granthtests@gmail.com\"}'"
+        )
         print("  2. Verify OTP and save token")
         return
 
@@ -176,6 +199,6 @@ def main():
         print("SUCCESS! Dummy order created in database.")
         print("=" * 50)
 
+
 if __name__ == "__main__":
     main()
-

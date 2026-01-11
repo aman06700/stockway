@@ -320,4 +320,3 @@ def upload_item_image(warehouse_id: int, item_id: int, image_file) -> Dict[str, 
     return SupabaseStorage.upload_django_file(
         "item-images", filename, image_file, upsert=True
     )
-

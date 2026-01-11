@@ -30,4 +30,6 @@ class Item(models.Model):
         db_table = "inventory_item"
 
     def __str__(self):
+        if self.sku:
+            return f"{self.name} (SKU: {self.sku})"
         return f"{self.name} (ID: {self.id})"

@@ -9,7 +9,11 @@ from .views import (
 # Add your inventory-specific endpoints here
 
 urlpatterns = [
-    path("warehouses/<int:warehouse_id>/items/", ItemListCreateView.as_view(), name="item-list-create"),
+    path(
+        "warehouses/<int:warehouse_id>/items/",
+        ItemListCreateView.as_view(),
+        name="item-list-create",
+    ),
     path(
         "warehouses/<int:warehouse_id>/items/<int:pk>/",
         ItemDetailView.as_view(),

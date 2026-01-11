@@ -92,4 +92,3 @@ class ItemImageDeleteSerializer(serializers.Serializer):
             if ".." in name or "/" in name or "\\" in name:
                 raise serializers.ValidationError("Invalid filename")
         return filenames
-

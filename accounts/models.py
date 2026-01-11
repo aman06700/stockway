@@ -40,7 +40,7 @@ class ActiveUserManager(BaseUserManager):
         """Create and save a superuser with email"""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-        # extra_fields.setdefault("role", "ADMIN")
+        extra_fields.setdefault("role", "ADMIN")
 
         if not extra_fields.get("is_staff"):
             raise ValueError("Superuser must have is_staff=True.")
@@ -85,7 +85,7 @@ class UserManager(BaseUserManager):
         """Create and save a superuser with email"""
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-        # extra_fields.setdefault("role", "ADMIN")
+        extra_fields.setdefault("role", "ADMIN")
 
         if not extra_fields.get("is_staff"):
             raise ValueError("Superuser must have is_staff=True.")

@@ -91,7 +91,9 @@ class ItemImageUploadView(WarehouseScopedMixin, generics.GenericAPIView):
         warehouse = self.get_warehouse()
         item = get_object_or_404(Item, pk=item_id, warehouse=warehouse)
 
-        serializer = self.get_serializer(data={"images": request.FILES.getlist("images")})
+        serializer = self.get_serializer(
+            data={"images": request.FILES.getlist("images")}
+        )
         serializer.is_valid(raise_exception=True)
 
         # Ensure bucket exists (idempotent)
@@ -129,4 +131,6 @@ class ItemImageUploadView(WarehouseScopedMixin, generics.GenericAPIView):
 
         item.image_urls = remaining_urls
         item.save(update_fields=["image_urls", "updated_at"])
-        return Response({"remaining_image_urls": item.image_urls}, status=status.HTTP_200_OK)
+        return Response(
+            {"remaining_image_urls": item.image_urls}, status=status.HTTP_200_OK
+        )

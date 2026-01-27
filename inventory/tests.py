@@ -223,3 +223,149 @@ class ItemStockTests(TestCase):
         """Test stock quantity cannot be negative"""
         self.item.quantity = -10
         # Should fail due to PositiveIntegerField
+        with self.assertRaises(Exception):
+            self.item.save()
+
+    def test_out_of_stock(self):
+        """Test identifying out of stock items"""
+        self.item.quantity = 0
+        self.item.save()
+        self.assertEqual(self.item.quantity, 0)
+
+
+class ItemImageTests(TestCase):
+    """Test cases for item images"""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+
+    def test_item_with_image_url(self):
+        """Test creating item with image URL"""
+        item = Item.objects.create(
+            warehouse=self.warehouse,
+            name="Test Item",
+            sku="TEST-IMG-001",
+            price=Decimal("50.00"),
+            quantity=100,
+            image="https://example.com/image.jpg",
+        )
+        self.assertEqual(item.image, "https://example.com/image.jpg")
+
+    def test_item_without_image(self):
+        """Test creating item without image"""
+        item = Item.objects.create(
+            warehouse=self.warehouse,
+            name="Test Item",
+            sku="TEST-IMG-002",
+            price=Decimal("50.00"),
+            quantity=100,
+        )
+        self.assertFalse(item.image)
+
+
+class ItemSoftDeleteTests(TestCase):
+    """Test cases for soft-deleted item handling"""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+
+    def test_items_from_soft_deleted_warehouse(self):
+        """Test items handling when warehouse is soft-deleted"""
+        item = Item.objects.create(
+            warehouse=self.warehouse,
+            name="Test Item",
+            sku="TEST-DEL-001",
+            price=Decimal("50.00"),
+            quantity=100,
+        )
+
+        # Items should still exist if warehouse is deleted
+        self.warehouse.soft_delete()
+        self.assertTrue(Item.objects.filter(id=item.id).exists())
+
+    def test_inactive_warehouse_items(self):
+        """Test items from inactive warehouse"""
+        item = Item.objects.create(
+            warehouse=self.warehouse,
+            name="Test Item",
+            sku="TEST-INACTIVE-001",
+            price=Decimal("50.00"),
+            quantity=100,
+        )
+
+        self.warehouse.is_active = False
+        self.warehouse.save()
+
+        # Items should exist but warehouse is inactive
+        item.refresh_from_db()
+        self.assertFalse(item.warehouse.is_active)
+
+
+class ItemValidationTests(TestCase):
+    """Test cases for item validation"""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+
+    def test_item_price_precision(self):
+        """Test item price decimal precision"""
+        item = Item.objects.create(
+            warehouse=self.warehouse,
+            name="Test Item",
+            sku="TEST-PRICE-001",
+            price=Decimal("99.999"),  # Will be rounded
+            quantity=10,
+        )
+        # Decimal field with max_digits=10, decimal_places=2
+        # Should store as 99.99 or 100.00 depending on rounding
+        self.assertIsInstance(item.price, Decimal)
+
+    def test_item_requires_warehouse(self):
+        """Test item requires a warehouse"""
+        with self.assertRaises(Exception):
+            Item.objects.create(
+                name="Test Item",
+                sku="TEST-NO-WH-001",
+                price=Decimal("50.00"),
+                quantity=100,
+            )
+
+    def test_item_requires_price(self):
+        """Test item requires price"""
+        with self.assertRaises(Exception):
+            Item.objects.create(
+                warehouse=self.warehouse,
+                name="Test Item",
+                sku="TEST-NO-PRICE-001",
+                quantity=100,
+            )

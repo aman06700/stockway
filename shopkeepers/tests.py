@@ -247,3 +247,148 @@ class ShopkeeperPermissionTests(TestCase):
     def test_shopkeeper_cannot_access_other_tickets(self):
         """Test shopkeeper cannot access other's support tickets"""
         self.assertNotEqual(self.ticket.user, self.other_shopkeeper)
+
+
+class ShopkeeperProfileLocationTests(TestCase):
+    """Test cases for shopkeeper profile location"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+
+    def test_profile_with_valid_coordinates(self):
+        """Test profile with valid latitude/longitude"""
+        from accounts.models import ShopkeeperProfile
+        from django.contrib.gis.geos import Point
+
+        location = Point(77.5946, 12.9716, srid=4326)
+        profile = ShopkeeperProfile.objects.create(
+            user=self.shopkeeper,
+            shop_name="Test Shop",
+            shop_address="Test Address",
+            location=location,
+        )
+        self.assertIsNotNone(profile.location)
+        self.assertAlmostEqual(profile.location.y, 12.9716, places=4)
+        self.assertAlmostEqual(profile.location.x, 77.5946, places=4)
+
+    def test_profile_verification_status(self):
+        """Test shopkeeper profile verification"""
+        from accounts.models import ShopkeeperProfile
+
+        profile = ShopkeeperProfile.objects.create(
+            user=self.shopkeeper,
+            shop_name="Test Shop",
+            shop_address="Test Address",
+        )
+        self.assertFalse(profile.is_verified)
+
+        profile.is_verified = True
+        profile.save()
+        self.assertTrue(profile.is_verified)
+
+
+class ShopkeeperOrderAccessTests(TestCase):
+    """Test cases for shopkeeper order access"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.other_shopkeeper = User.objects.create_user(
+            email="other@example.com", role="SHOPKEEPER"
+        )
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+        self.order = Order.objects.create(
+            shopkeeper=self.shopkeeper, warehouse=self.warehouse
+        )
+
+    def test_order_belongs_to_shopkeeper(self):
+        """Test order belongs to correct shopkeeper"""
+        self.assertEqual(self.order.shopkeeper, self.shopkeeper)
+
+    def test_order_not_belongs_to_other_shopkeeper(self):
+        """Test order does not belong to other shopkeeper"""
+        self.assertNotEqual(self.order.shopkeeper, self.other_shopkeeper)
+
+
+class ShopkeeperSoftDeleteTests(TestCase):
+    """Test cases for soft-deleted shopkeeper handling"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+
+    def test_soft_deleted_shopkeeper_orders_preserved(self):
+        """Test orders are preserved when shopkeeper is soft-deleted"""
+        order = Order.objects.create(
+            shopkeeper=self.shopkeeper, warehouse=self.warehouse
+        )
+        order_id = order.id
+
+        self.shopkeeper.soft_delete()
+
+        # Order should still exist
+        self.assertTrue(Order.objects.filter(id=order_id).exists())
+
+    def test_soft_deleted_shopkeeper_profile_preserved(self):
+        """Test profile is preserved when shopkeeper is soft-deleted"""
+        from accounts.models import ShopkeeperProfile
+
+        profile = ShopkeeperProfile.objects.create(
+            user=self.shopkeeper, shop_name="Test Shop", shop_address="Test Address"
+        )
+        profile_id = profile.id
+
+        self.shopkeeper.soft_delete()
+
+        # Profile should still exist
+        self.assertTrue(ShopkeeperProfile.objects.filter(id=profile_id).exists())
+
+
+class NotificationMarkAsReadTests(TestCase):
+    """Test cases for notification read/unread status"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+
+    def test_notification_initially_unread(self):
+        """Test notification is initially unread"""
+        notification = Notification.objects.create(
+            user=self.shopkeeper, title="Test", message="Test message"
+        )
+        self.assertFalse(notification.is_read)
+
+    def test_mark_notification_as_read(self):
+        """Test marking notification as read"""
+        notification = Notification.objects.create(
+            user=self.shopkeeper, title="Test", message="Test message"
+        )
+        notification.is_read = True
+        notification.save()
+        self.assertTrue(notification.is_read)

@@ -2,7 +2,7 @@
 
 ## Authentication Endpoints
 
-All authentication is handled through Supabase using email and OTP (One-Time Password).
+All authentication is handled through Supabase using email and password.
 
 ### Base URL
 ```
@@ -10,17 +10,18 @@ All authentication is handled through Supabase using email and OTP (One-Time Pas
 ```
 
 ### Notes
-- Authentication tokens are managed by Supabase client SDK
+- Authentication uses Supabase email/password sign-up and sign-in
+- JWT tokens are managed by Supabase
 - Token refresh is handled automatically by the Supabase client on the frontend
-- No JWT verification is needed on the backend - Supabase handles all token validation
+- Backend validates Supabase JWTs for all authenticated requests
 
 ---
 
-## 1. Send OTP
+## 1. Sign Up
 
-Send an OTP to an email address for authentication.
+Create a new user account with email and password.
 
-**Endpoint:** `POST /api/auth/send-otp/`
+**Endpoint:** `POST /api/auth/signup/`
 
 **Authentication:** None required
 
@@ -32,16 +33,30 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "email": "user@example.com"
+  "email": "user@example.com",
+  "password": "secure_password",
+  "confirm_password": "secure_password"
 }
 ```
 
-**Response (200 OK):**
+**Response (201 Created):**
 ```json
 {
-  "success": true,
-  "message": "OTP sent successfully to your email",
-  "email": "user@example.com"
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expires_in": 36000,
+  "expires_at": 1698432000,
+  "token_type": "bearer",
+  "user": {
+    "id": 1,
+    "phone_number": null,
+    "email": "user@example.com",
+    "full_name": "",
+    "role": "PENDING",
+    "is_active": true,
+    "date_joined": "2025-10-30T10:30:00Z",
+    "last_login": null
+  }
 }
 ```
 
@@ -49,31 +64,32 @@ Content-Type: application/json
 ```json
 {
   "error": {
-    "email": ["Enter a valid email address."]
+    "password": ["Password must be at least 6 characters"],
+    "confirm_password": ["Passwords do not match"]
   }
 }
 ```
 
 ---
 
-## 2. Verify OTP
+## 2. Sign In
 
-Verify the OTP and get authentication tokens.
+Authenticate with email and password.
+
+**Endpoint:** `POST /api/auth/signin/`
+
+**Authentication:** None required
+
 **Headers:**
 ```
 Content-Type: application/json
 ```
 
-
-**Endpoint:** `POST /api/auth/verify-otp/`
-
-**Authentication:** None required
-
 **Request Body:**
 ```json
 {
   "email": "user@example.com",
-  "otp": "123456"
+  "password": "secure_password"
 }
 ```
 
@@ -88,43 +104,31 @@ Content-Type: application/json
   "user": {
     "id": 1,
     "phone_number": null,
-**Error Response (400 Bad Request):**
-```json
-{
-  "error": {
-    "otp": ["OTP must contain only digits"]
-  }
-}
-```
-
     "email": "user@example.com",
     "full_name": "",
     "role": "SHOPKEEPER",
     "is_active": true,
-    "date_joined": "2025-10-30T10:30:00Z",
-    "last_login": null
+    "date_joined": "2025-10-27T10:30:00Z",
+    "last_login": "2025-10-27T11:00:00Z"
   }
-**Error Response (415 Unsupported Media Type):**
-```json
-{
-  "detail": "Unsupported media type \"text/plain\" in request."
-}
-```
-*Note: This error occurs when the `Content-Type: application/json` header is missing from the request.*
-
 }
 ```
 
 **Error Response (401 Unauthorized):**
 ```json
 {
-  "error": "Invalid or expired OTP"
+  "error": "Invalid credentials"
+}
+```
+
+**Error Response (403 Forbidden - Inactive/Deleted User):**
+```json
+{
+  "error": "Account is deactivated"
 }
 ```
 
 ---
-
-Content-Type: application/json
 ## 3. Logout
 
 Invalidate the current session.
@@ -179,12 +183,18 @@ Authorization: Bearer <access_token>
 
 ## Authentication Flow
 
-### Initial Login
-1. User provides email address
-2. Call `POST /api/auth/send-otp/` with email
-3. User receives OTP via email
-4. Call `POST /api/auth/verify-otp/` with email and OTP
-5. Store `access_token` and `refresh_token` on client (managed by Supabase SDK)
+### Sign Up
+1. User provides email, password, and confirmation
+2. Call `POST /api/auth/signup/` with credentials
+3. Account is created with PENDING role
+4. Store `access_token` and `refresh_token` on client
+5. Admin must assign proper role before user can access features
+
+### Sign In
+1. User provides email and password
+2. Call `POST /api/auth/signin/` with credentials
+3. Store `access_token` and `refresh_token` on client
+4. User is authenticated and can access features based on role
 
 ### Authenticated Requests
 Include the access token in the Authorization header:
@@ -215,24 +225,26 @@ Examples:
 
 ## User Roles
 
-- `SHOPKEEPER` - Shop owner (default)
+- `PENDING` - New user awaiting role assignment (default)
+- `SHOPKEEPER` - Shop owner
 - `RIDER` - Delivery rider
 - `WAREHOUSE_MANAGER` - Warehouse manager
 - `ADMIN` - System administrator
+
+**Note:** New users are assigned PENDING role by default. An administrator must assign the appropriate role before the user can access role-specific features.
 
 ---
 
 ## Technical Implementation
 
 ### User Model Structure
-- **USERNAME_FIELD**: `phone_number` (not `username`)
-- **Primary Identifier**: Phone number in E.164 format
-- **No Username Field**: The custom User model does not have a `username` field
-- **Authentication Method**: Phone-based OTP via Supabase
-- **User String Representation**: Returns `phone_number`
+- **USERNAME_FIELD**: `email`
+- **Primary Identifier**: Email address
+- **Authentication Method**: Email/password via Supabase
+- **User String Representation**: Returns `email` or `phone_number` or `id`
 - **Available Methods**:
-  - `get_full_name()` - Returns `full_name` or `phone_number` if name not set
-  - `get_short_name()` - Returns `phone_number`
+  - `get_full_name()` - Returns `full_name` or `email`
+  - `get_short_name()` - Returns `email`
 
 ### ShopkeeperProfile Model
 - **Relationship**: OneToOne with User model
@@ -243,6 +255,6 @@ Examples:
 ### Database Schema
 - **Users Table**: `users` (custom table name, not `auth_user`)
 - **Location Fields**: Use PostGIS geography type (SRID 4326)
-- **Indexes**: Created on `phone_number` and `supabase_uid` for performance
+- **Indexes**: Created on `email`, `phone_number` and `supabase_uid` for performance
 
 

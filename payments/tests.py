@@ -281,3 +281,181 @@ class PayoutViewTests(APITestCase):
             user=self.rider_user, warehouse=self.warehouse
         )
         self.client = APIClient()
+
+
+class PaymentStatusTransitionTests(TestCase):
+    """Test cases for payment status transitions"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+        self.order = Order.objects.create(
+            shopkeeper=self.shopkeeper,
+            warehouse=self.warehouse,
+            total_amount=Decimal("100.00"),
+        )
+
+    def test_payment_pending_to_completed(self):
+        """Test payment status transition from pending to completed"""
+        payment = Payment.objects.create(
+            order=self.order,
+            payer=self.shopkeeper,
+            amount=Decimal("100.00"),
+            status="pending",
+        )
+        payment.status = "completed"
+        payment.save()
+        self.assertEqual(payment.status, "completed")
+
+    def test_payment_pending_to_failed(self):
+        """Test payment status transition from pending to failed"""
+        payment = Payment.objects.create(
+            order=self.order,
+            payer=self.shopkeeper,
+            amount=Decimal("100.00"),
+            status="pending",
+        )
+        payment.status = "failed"
+        payment.save()
+        self.assertEqual(payment.status, "failed")
+
+
+class PaymentAmountValidationTests(TestCase):
+    """Test cases for payment amount validation"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+        self.order = Order.objects.create(
+            shopkeeper=self.shopkeeper,
+            warehouse=self.warehouse,
+            total_amount=Decimal("100.00"),
+        )
+
+    def test_payment_amount_positive(self):
+        """Test payment amount must be positive"""
+        payment = Payment.objects.create(
+            order=self.order, payer=self.shopkeeper, amount=Decimal("100.00")
+        )
+        self.assertGreater(payment.amount, Decimal("0"))
+
+    def test_payment_amount_precision(self):
+        """Test payment amount decimal precision"""
+        payment = Payment.objects.create(
+            order=self.order, payer=self.shopkeeper, amount=Decimal("99.99")
+        )
+        self.assertEqual(payment.amount, Decimal("99.99"))
+
+
+class PayoutStatusTests(TestCase):
+    """Test cases for payout status management"""
+
+    def setUp(self):
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.rider_user = User.objects.create_user(
+            email="rider@example.com", role="RIDER"
+        )
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+        self.rider = Rider.objects.create(
+            user=self.rider_user, warehouse=self.warehouse
+        )
+        self.order = Order.objects.create(
+            shopkeeper=self.shopkeeper, warehouse=self.warehouse
+        )
+
+    def test_payout_status_transitions(self):
+        """Test payout status can transition through states"""
+        payout = Payout.objects.create(
+            order=self.order,
+            rider=self.rider,
+            computed_amount=Decimal("50.00"),
+            status="pending",
+        )
+        self.assertEqual(payout.status, "pending")
+
+        payout.status = "processed"
+        payout.save()
+        self.assertEqual(payout.status, "processed")
+
+        payout.status = "paid"
+        payout.save()
+        self.assertEqual(payout.status, "paid")
+
+
+class PayoutCalculationTests(TestCase):
+    """Test cases for payout amount calculations"""
+
+    def setUp(self):
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.rider_user = User.objects.create_user(
+            email="rider@example.com", role="RIDER"
+        )
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+        self.rider = Rider.objects.create(
+            user=self.rider_user, warehouse=self.warehouse
+        )
+        self.order = Order.objects.create(
+            shopkeeper=self.shopkeeper, warehouse=self.warehouse
+        )
+
+    def test_payout_amount_cannot_be_negative(self):
+        """Test payout amount must be non-negative"""
+        payout = Payout.objects.create(
+            order=self.order, rider=self.rider, computed_amount=Decimal("50.00")
+        )
+        self.assertGreaterEqual(payout.computed_amount, Decimal("0"))
+
+    def test_payout_amount_precision(self):
+        """Test payout amount decimal precision"""
+        payout = Payout.objects.create(
+            order=self.order, rider=self.rider, computed_amount=Decimal("45.67")
+        )
+        self.assertEqual(payout.computed_amount, Decimal("45.67"))

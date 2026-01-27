@@ -1,7 +1,7 @@
 from django.urls import path
 from accounts.views import (
-    SendOTPView,
-    VerifyOTPView,
+    SignUpView,
+    SignInView,
     LogoutView,
     CurrentUserView,
     AdminUserListView,
@@ -15,9 +15,9 @@ from accounts.views import (
 
 
 urlpatterns = [
-    # OTP Authentication endpoints
-    path("send-otp/", SendOTPView.as_view(), name="send-otp"),
-    path("verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
+    # Email/Password Authentication endpoints
+    path("signup/", SignUpView.as_view(), name="signup"),
+    path("signin/", SignInView.as_view(), name="signin"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("me/", CurrentUserView.as_view(), name="current-user"),
     path(

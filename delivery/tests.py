@@ -207,3 +207,183 @@ class DeliveryStatusTransitionTests(TestCase):
         self.delivery.status = "failed"
         self.delivery.save()
         self.assertEqual(self.delivery.status, "failed")
+
+
+class DeliveryFeeTests(TestCase):
+    """Test cases for delivery fee validation"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.rider = User.objects.create_user(email="rider@example.com", role="RIDER")
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+        self.order = Order.objects.create(
+            shopkeeper=self.shopkeeper,
+            warehouse=self.warehouse,
+            total_amount=Decimal("100.00"),
+        )
+
+    def test_delivery_fee_default_zero(self):
+        """Test delivery fee defaults to zero"""
+        delivery = Delivery.objects.create(order=self.order, rider=self.rider)
+        self.assertEqual(delivery.delivery_fee, Decimal("0.00"))
+
+    def test_delivery_fee_positive(self):
+        """Test delivery fee can be set to positive amount"""
+        delivery = Delivery.objects.create(
+            order=self.order, rider=self.rider, delivery_fee=Decimal("25.00")
+        )
+        self.assertEqual(delivery.delivery_fee, Decimal("25.00"))
+
+    def test_delivery_fee_precision(self):
+        """Test delivery fee decimal precision"""
+        delivery = Delivery.objects.create(
+            order=self.order, rider=self.rider, delivery_fee=Decimal("12.99")
+        )
+        self.assertEqual(delivery.delivery_fee, Decimal("12.99"))
+
+
+class DeliveryTimestampTests(TestCase):
+    """Test cases for delivery timestamp tracking"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.rider = User.objects.create_user(email="rider@example.com", role="RIDER")
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+        self.order = Order.objects.create(
+            shopkeeper=self.shopkeeper,
+            warehouse=self.warehouse,
+            total_amount=Decimal("100.00"),
+        )
+
+    def test_delivery_created_at_auto_set(self):
+        """Test delivery created_at is automatically set"""
+        delivery = Delivery.objects.create(order=self.order, rider=self.rider)
+        self.assertIsNotNone(delivery.created_at)
+
+    def test_delivery_updated_at_auto_set(self):
+        """Test delivery updated_at is automatically set"""
+        delivery = Delivery.objects.create(order=self.order, rider=self.rider)
+        self.assertIsNotNone(delivery.updated_at)
+
+
+class DeliveryRiderAssignmentTests(TestCase):
+    """Test cases for rider assignment to deliveries"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.rider1 = User.objects.create_user(email="rider1@example.com", role="RIDER")
+        self.rider2 = User.objects.create_user(email="rider2@example.com", role="RIDER")
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+        self.order = Order.objects.create(
+            shopkeeper=self.shopkeeper,
+            warehouse=self.warehouse,
+            total_amount=Decimal("100.00"),
+        )
+
+    def test_delivery_can_be_reassigned(self):
+        """Test delivery can be reassigned to different rider"""
+        delivery = Delivery.objects.create(
+            order=self.order, rider=self.rider1, status="assigned"
+        )
+        self.assertEqual(delivery.rider, self.rider1)
+
+        delivery.rider = self.rider2
+        delivery.save()
+        self.assertEqual(delivery.rider, self.rider2)
+
+    def test_delivery_without_rider_allowed(self):
+        """Test delivery can exist without rider assignment"""
+        delivery = Delivery.objects.create(order=self.order, status="assigned")
+        self.assertIsNone(delivery.rider)
+
+
+class DeliveryOrderRelationshipTests(TestCase):
+    """Test cases for delivery-order relationship"""
+
+    def setUp(self):
+        self.shopkeeper = User.objects.create_user(
+            email="shopkeeper@example.com", role="SHOPKEEPER"
+        )
+        self.rider = User.objects.create_user(email="rider@example.com", role="RIDER")
+        self.warehouse_admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.warehouse_admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+
+    def test_one_delivery_per_order(self):
+        """Test one-to-one relationship: one delivery per order"""
+        order = Order.objects.create(
+            shopkeeper=self.shopkeeper,
+            warehouse=self.warehouse,
+            total_amount=Decimal("100.00"),
+        )
+        delivery1 = Delivery.objects.create(order=order, rider=self.rider)
+
+        # Creating another delivery for same order should fail
+        with self.assertRaises(Exception):
+            Delivery.objects.create(order=order, rider=self.rider)
+
+    def test_delivery_linked_to_order_shopkeeper(self):
+        """Test delivery is properly linked to order's shopkeeper"""
+        order = Order.objects.create(
+            shopkeeper=self.shopkeeper,
+            warehouse=self.warehouse,
+            total_amount=Decimal("100.00"),
+        )
+        delivery = Delivery.objects.create(order=order, rider=self.rider)
+
+        self.assertEqual(delivery.order.shopkeeper, self.shopkeeper)
+
+    def test_delivery_linked_to_order_warehouse(self):
+        """Test delivery is properly linked to order's warehouse"""
+        order = Order.objects.create(
+            shopkeeper=self.shopkeeper,
+            warehouse=self.warehouse,
+            total_amount=Decimal("100.00"),
+        )
+        delivery = Delivery.objects.create(order=order, rider=self.rider)
+
+        self.assertEqual(delivery.order.warehouse, self.warehouse)

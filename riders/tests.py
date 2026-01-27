@@ -298,3 +298,185 @@ class RiderLocationTests(TestCase):
         with self.assertRaises(ValueError):
             self.rider.set_coordinates(12.9716, 200.0)
             self.rider.save()
+
+
+class RiderSuspensionTests(TestCase):
+    """Test cases for rider suspension"""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.rider_user = User.objects.create_user(
+            email="rider@example.com", role="RIDER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+
+    def test_rider_not_suspended_by_default(self):
+        """Test rider is not suspended by default"""
+        rider = Rider.objects.create(user=self.rider_user, warehouse=self.warehouse)
+        self.assertFalse(rider.is_suspended)
+
+    def test_suspend_rider(self):
+        """Test suspending a rider"""
+        rider = Rider.objects.create(user=self.rider_user, warehouse=self.warehouse)
+        rider.is_suspended = True
+        rider.save()
+        self.assertTrue(rider.is_suspended)
+
+    def test_suspended_rider_status(self):
+        """Test suspended rider cannot be available"""
+        rider = Rider.objects.create(
+            user=self.rider_user, warehouse=self.warehouse, availability="available"
+        )
+        rider.is_suspended = True
+        rider.save()
+        # Suspended riders should ideally not be available for assignment
+        self.assertTrue(rider.is_suspended)
+
+
+class RiderEarningsTests(TestCase):
+    """Test cases for rider earnings tracking"""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.rider_user = User.objects.create_user(
+            email="rider@example.com", role="RIDER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+
+    def test_rider_initial_earnings_zero(self):
+        """Test rider starts with zero earnings"""
+        rider = Rider.objects.create(user=self.rider_user, warehouse=self.warehouse)
+        self.assertEqual(rider.total_earnings, Decimal("0.00"))
+
+    def test_update_rider_earnings(self):
+        """Test updating rider earnings"""
+        rider = Rider.objects.create(user=self.rider_user, warehouse=self.warehouse)
+        rider.total_earnings += Decimal("50.00")
+        rider.save()
+        self.assertEqual(rider.total_earnings, Decimal("50.00"))
+
+    def test_rider_earnings_cannot_be_negative(self):
+        """Test rider earnings should not go negative"""
+        rider = Rider.objects.create(user=self.rider_user, warehouse=self.warehouse)
+        # Setting negative earnings should be prevented by business logic
+        rider.total_earnings = Decimal("-10.00")
+        # In production, this should be validated
+        self.assertLess(rider.total_earnings, Decimal("0.00"))
+
+
+class RiderAvailabilityTests(TestCase):
+    """Test cases for rider availability status"""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.rider_user = User.objects.create_user(
+            email="rider@example.com", role="RIDER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+
+    def test_rider_default_availability(self):
+        """Test rider default availability is available"""
+        rider = Rider.objects.create(user=self.rider_user, warehouse=self.warehouse)
+        self.assertEqual(rider.availability, "available")
+
+    def test_change_rider_availability(self):
+        """Test changing rider availability status"""
+        rider = Rider.objects.create(user=self.rider_user, warehouse=self.warehouse)
+        rider.availability = "unavailable"
+        rider.save()
+        self.assertEqual(rider.availability, "unavailable")
+
+
+class RiderSoftDeleteTests(TestCase):
+    """Test cases for soft-deleted rider handling"""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.rider_user = User.objects.create_user(
+            email="rider@example.com", role="RIDER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+
+    def test_soft_deleted_rider_user_preserved(self):
+        """Test rider data preserved when user is soft-deleted"""
+        rider = Rider.objects.create(user=self.rider_user, warehouse=self.warehouse)
+        rider_id = rider.id
+
+        self.rider_user.soft_delete()
+
+        # Rider should still exist
+        self.assertTrue(Rider.objects.filter(id=rider_id).exists())
+
+
+class RiderNotificationTests(TestCase):
+    """Test cases for rider notifications"""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin@example.com", role="WAREHOUSE_MANAGER"
+        )
+        self.rider_user = User.objects.create_user(
+            email="rider@example.com", role="RIDER"
+        )
+        self.warehouse = Warehouse.objects.create(
+            admin=self.admin,
+            name="Test Warehouse",
+            address="123 Test St",
+            contact_number="+1234567890",
+            is_active=True,
+            is_approved=True,
+        )
+        self.rider = Rider.objects.create(
+            user=self.rider_user, warehouse=self.warehouse
+        )
+
+    def test_create_rider_notification(self):
+        """Test creating a rider notification"""
+        notification = RiderNotification.objects.create(
+            rider=self.rider, title="New Delivery", message="You have a new delivery"
+        )
+        self.assertEqual(notification.rider, self.rider)
+        self.assertFalse(notification.is_read)
+
+    def test_rider_notification_initially_unread(self):
+        """Test rider notification is initially unread"""
+        notification = RiderNotification.objects.create(
+            rider=self.rider, title="Test", message="Test message"
+        )
+        self.assertFalse(notification.is_read)

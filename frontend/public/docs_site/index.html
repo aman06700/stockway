@@ -37,9 +37,9 @@
 
     <main class="main-content">
         <section id="intro">
-            <h1>Stockway API Documentation</h1>
-            <p>Welcome to the Stockway platform API documentation. This API powers interactions between Shopkeepers,
-                Warehouses, and Riders, providing a robust backend for rural supply chain and delivery management.</p>
+            <h1>Backend API Documentation</h1>
+            <p>Welcome to the Backend platform API documentation. This API powers interactions between Shopkeepers,
+                Warehouses, and Riders, providing a robust backend for rural supply and delivery.</p>
 
             <div
                 style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;">
@@ -51,7 +51,7 @@
                 <div
                     style="display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
                     <span style="color: var(--text-secondary); font-size: 0.9rem;">Auth Header</span>
-                    <code style="background: none; padding: 0;">Authorization: Bearer &lt;access_token&gt;</code>
+                    <code style="background: none; padding: 0;">Authorization: Token &lt;your_token&gt;</code>
                 </div>
                 <div style="display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center;">
                     <span style="color: var(--text-secondary); font-size: 0.9rem;">Content-Type</span>
@@ -59,61 +59,41 @@
                 </div>
             </div>
 
-            <div style="margin-top: 1.5rem;">
-                <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">User Roles</h3>
-                <ul style="color: var(--text-secondary); line-height: 1.7;">
-                    <li><strong>PENDING</strong>: Default role for new users; limited access until role assigned by admin</li>
-                    <li><strong>SHOPKEEPER</strong>: Browse inventory, create orders, manage shop profile</li>
-                    <li><strong>WAREHOUSE_MANAGER</strong>: Manage inventory, accept/reject orders, assign riders</li>
-                    <li><strong>RIDER</strong>: Accept deliveries, update delivery status, track earnings</li>
-                    <li><strong>ADMIN</strong>: Full system access, user management, analytics</li>
-                </ul>
-            </div>
-
-            <div style="margin-top: 1.5rem;">
-                <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Data Management</h3>
-                <ul style="color: var(--text-secondary); line-height: 1.7;">
-                    <li><strong>Soft Delete:</strong> Users can be deactivated (soft-deleted) which sets <code>deleted_at</code> and <code>is_active=false</code>. Soft-deleted users are excluded from default queries but preserved for data integrity.</li>
-                    <li><strong>Hard Delete:</strong> Permanent deletion is restricted and requires no dependent data (orders, warehouses, etc.)</li>
-                    <li><strong>Authentication:</strong> Powered by Supabase with email/password flow</li>
-                    <li><strong>Storage:</strong> File uploads (images, documents) stored in Supabase Storage with role-based access</li>
-                    <li><strong>Geolocation:</strong> PostGIS-enabled for warehouse and rider location tracking</li>
-                </ul>
+            <div style="margin-top: 1rem; font-size: 0.95rem; color: var(--text-secondary);">
+                Roles: SHOPKEEPER, WAREHOUSE_MANAGER, RIDER, ADMIN (superusers also allowed).
             </div>
         </section>
 
         <section id="auth">
             <h2>Auth & Accounts</h2>
-            <p>Supabase email/password authentication. Include <code>Authorization: Bearer &lt;access_token&gt;</code> for authenticated calls.</p>
+            <p>Supabase email OTP flow. Include <code>Authorization: Bearer &lt;access_token&gt;</code> for authenticated calls.</p>
             <p style="margin-bottom: 1.5rem;"><strong>Base URL:</strong> <code>/api/accounts/</code></p>
 
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="method post">POST</span>
-                    <span class="url">/signup/</span>
+                    <span class="url">/send-otp/</span>
                 </div>
-                <h3>Sign Up</h3>
-                <p>Create a new user account with email and password.</p>
+                <h3>Send OTP</h3>
+                <p>Send a 6-digit OTP to the supplied email.</p>
                 <pre><code>{
-  "email": "user@example.com",
-  "password": "securepass123",
-  "confirm_password": "securepass123"
+  "email": "user@example.com"
 }</code></pre>
-                <p class="meta">Auth: none; Returns access_token, refresh_token, and user object. New users get role=PENDING.</p>
+                <p class="meta">Auth: none</p>
             </div>
 
             <div class="endpoint">
                 <div class="endpoint-header">
                     <span class="method post">POST</span>
-                    <span class="url">/signin/</span>
+                    <span class="url">/verify-otp/</span>
                 </div>
-                <h3>Sign In</h3>
-                <p>Authenticate with email and password. Returns Supabase tokens plus user payload.</p>
+                <h3>Verify OTP</h3>
+                <p>Verify OTP, create user if needed, and return Supabase tokens plus user payload.</p>
                 <pre><code>{
   "email": "user@example.com",
-  "password": "securepass123"
+  "otp": "123456"
 }</code></pre>
-                <p class="meta">Returns: 200 with tokens; 401 for invalid credentials; 403 for inactive users.</p>
+                <p class="meta">Errors: 400 validation, 401 invalid OTP</p>
             </div>
 
             <div class="endpoint">

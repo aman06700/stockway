@@ -6,8 +6,8 @@ from django.contrib.auth import get_user_model
 from core.services import SupabaseService
 from core.permissions import IsSuperAdmin
 from accounts.serializers import (
-    SendOTPSerializer,
-    VerifyOTPSerializer,
+    SignUpSerializer,
+    SignInSerializer,
     UserSerializer,
     UserAdminSerializer,
     UserDeactivateSerializer,
@@ -21,67 +21,25 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-class SendOTPView(APIView):
+class SignUpView(APIView):
     """
-    Send OTP to email for authentication
-    """
-
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        """
-        Send OTP to the provided email
-
-        Request body:
-        {
-            "email": "user@example.com"
-        }
-        """
-        serializer = SendOTPSerializer(data=request.data)
-
-        if not serializer.is_valid():
-            return Response(
-                {"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        email = serializer.validated_data["email"]
-
-        try:
-            logger.info(f"OTP send request received for email: {email}")
-            result = SupabaseService.send_otp(email)
-            return Response(
-                {
-                    "success": True,
-                    "message": "OTP sent successfully to your email",
-                    "email": email,
-                },
-                status=status.HTTP_200_OK,
-            )
-        except Exception as e:
-            logger.error(f"Failed to send OTP: {str(e)}")
-            return Response(
-                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
-class VerifyOTPView(APIView):
-    """
-    Verify OTP and authenticate user
+    Sign up new user with email and password
     """
 
     permission_classes = [AllowAny]
 
     def post(self, request):
         """
-        Verify OTP and return authentication tokens
+        Create new user account
 
         Request body:
         {
             "email": "user@example.com",
-            "otp": "123456"
+            "password": "secure_password",
+            "confirm_password": "secure_password"
         }
         """
-        serializer = VerifyOTPSerializer(data=request.data)
+        serializer = SignUpSerializer(data=request.data)
 
         if not serializer.is_valid():
             return Response(
@@ -89,13 +47,13 @@ class VerifyOTPView(APIView):
             )
 
         email = serializer.validated_data["email"]
-        otp = serializer.validated_data["otp"]
+        password = serializer.validated_data["password"]
 
         try:
-            logger.info(f"Attempting OTP verification for email: {email}")
+            logger.info(f"Sign up request received for email: {email}")
 
-            # Verify OTP with Supabase
-            supabase_response = SupabaseService.verify_otp(email, otp)
+            # Sign up user with Supabase
+            supabase_response = SupabaseService.sign_up(email, password)
 
             # Access user data from response
             user_data = (
@@ -111,18 +69,133 @@ class VerifyOTPView(APIView):
 
             if not user_data:
                 return Response(
-                    {"error": "Invalid OTP"}, status=status.HTTP_401_UNAUTHORIZED
+                    {"error": "Sign up failed"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get or create Django user with default role
+            user_id = user_data.id if hasattr(user_data, "id") else user_data.get("id")
+            user, created = User.objects.get_or_create(
+                supabase_uid=user_id,
+                defaults={
+                    "email": email,
+                    "is_active": True,
+                    "role": "PENDING",  # Default safe role, admin must assign proper role
+                },
+            )
+
+            if created:
+                logger.info(f"New user created during sign up: {email}")
+            else:
+                logger.debug(f"Existing user signed up: {email}")
+
+            # Prepare response
+            response_data = {
+                "access_token": session_data.access_token
+                if hasattr(session_data, "access_token")
+                else session_data.get("access_token"),
+                "refresh_token": session_data.refresh_token
+                if hasattr(session_data, "refresh_token")
+                else session_data.get("refresh_token"),
+                "expires_in": session_data.expires_in
+                if hasattr(session_data, "expires_in")
+                else session_data.get("expires_in"),
+                "expires_at": session_data.expires_at
+                if hasattr(session_data, "expires_at")
+                else session_data.get("expires_at"),
+                "token_type": session_data.token_type
+                if hasattr(session_data, "token_type")
+                else session_data.get("token_type"),
+                "user": UserSerializer(user).data,
+            }
+
+            logger.info(f"Sign up successful for user: {email}, user_id: {user.id}")
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error(f"Sign up failed: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SignInView(APIView):
+    """
+    Sign in user with email and password
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """
+        Authenticate user and return tokens
+
+        Request body:
+        {
+            "email": "user@example.com",
+            "password": "secure_password"
+        }
+        """
+        serializer = SignInSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                {"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        email = serializer.validated_data["email"]
+        password = serializer.validated_data["password"]
+
+        try:
+            logger.info(f"Attempting sign in for email: {email}")
+
+            # Sign in with Supabase
+            supabase_response = SupabaseService.sign_in(email, password)
+
+            # Access user data from response
+            user_data = (
+                supabase_response.user
+                if hasattr(supabase_response, "user")
+                else supabase_response.get("user")
+            )
+            session_data = (
+                supabase_response.session
+                if hasattr(supabase_response, "session")
+                else supabase_response.get("session")
+            )
+
+            if not user_data:
+                return Response(
+                    {"error": "Invalid credentials"},
+                    status=status.HTTP_401_UNAUTHORIZED,
                 )
 
             # Get or create Django user
             user_id = user_data.id if hasattr(user_data, "id") else user_data.get("id")
             user, created = User.objects.get_or_create(
                 supabase_uid=user_id,
-                defaults={"email": email, "is_active": True},
+                defaults={
+                    "email": email,
+                    "is_active": True,
+                    "role": "PENDING",  # Default safe role
+                },
             )
 
+            # Check if user is active
+            if not user.is_active:
+                logger.warning(f"Inactive user attempted sign in: {email}")
+                return Response(
+                    {"error": "Account is deactivated"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            # Check if user is soft deleted
+            if user.is_deleted:
+                logger.warning(f"Deleted user attempted sign in: {email}")
+                return Response(
+                    {"error": "Account has been deleted"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             if created:
-                logger.info(f"New user created during OTP verification: {email}")
+                logger.info(f"New user created during sign in: {email}")
             else:
                 logger.debug(f"Existing user authenticated: {email}")
 
@@ -146,14 +219,14 @@ class VerifyOTPView(APIView):
                 "user": UserSerializer(user).data,
             }
 
-            logger.info(
-                f"OTP verification successful for user: {email}, user_id: {user.id}"
-            )
+            logger.info(f"Sign in successful for user: {email}, user_id: {user.id}")
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.error(f"OTP verification failed: {str(e)}")
-            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+            logger.error(f"Sign in failed: {str(e)}")
+            return Response(
+                {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 class LogoutView(APIView):

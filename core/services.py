@@ -168,61 +168,60 @@ class SupabaseService:
         return cls._client
 
     @classmethod
-    def send_otp(cls, email: str) -> Dict[str, Any]:
+    def sign_up(cls, email: str, password: str) -> Dict[str, Any]:
         """
-        Send OTP to email (6-digit code, not magic link)
+        Sign up new user with email and password
 
         Args:
             email: Email address
-
-        Returns:
-            Response from Supabase
-        """
-        try:
-            client = cls.get_client()
-            logger.debug(f"Attempting to send OTP to email: {email}")
-
-            # Send OTP code (not magic link) to email
-            # The user will receive a 6-digit code to enter manually
-            response = client.auth.sign_in_with_otp(
-                {
-                    "email": email,
-                    "options": {
-                        "should_create_user": True,
-                        "email_redirect_to": None,  # Disable redirect URL
-                    },
-                }
-            )
-            logger.info(f"OTP code sent successfully to {email}")
-            return {"success": True, "message": "OTP sent successfully"}
-        except Exception as e:
-            logger.error(f"Failed to send OTP to {email}: {str(e)}", exc_info=True)
-            raise Exception(f"Failed to send OTP: {str(e)}")
-
-    @classmethod
-    def verify_otp(cls, email: str, token: str) -> Dict[str, Any]:
-        """
-        Verify OTP for email
-
-        Args:
-            email: Email address
-            token: OTP token received via email
+            password: User password
 
         Returns:
             User session data from Supabase
         """
         try:
             client = cls.get_client()
-            logger.debug(f"Attempting to verify OTP for email: {email}")
+            logger.debug(f"Attempting to sign up user with email: {email}")
 
-            response = client.auth.verify_otp(
-                {"email": email, "token": token, "type": "email"}
+            response = client.auth.sign_up(
+                {
+                    "email": email,
+                    "password": password,
+                }
             )
-            logger.info(f"OTP verified successfully for {email}")
+            logger.info(f"User signed up successfully: {email}")
             return response
         except Exception as e:
-            logger.error(f"Failed to verify OTP for {email}: {str(e)}", exc_info=True)
-            raise Exception(f"Invalid or expired OTP: {str(e)}")
+            logger.error(f"Failed to sign up user {email}: {str(e)}", exc_info=True)
+            raise Exception(f"Sign up failed: {str(e)}")
+
+    @classmethod
+    def sign_in(cls, email: str, password: str) -> Dict[str, Any]:
+        """
+        Sign in user with email and password
+
+        Args:
+            email: Email address
+            password: User password
+
+        Returns:
+            User session data from Supabase
+        """
+        try:
+            client = cls.get_client()
+            logger.debug(f"Attempting to sign in user with email: {email}")
+
+            response = client.auth.sign_in_with_password(
+                {
+                    "email": email,
+                    "password": password,
+                }
+            )
+            logger.info(f"User signed in successfully: {email}")
+            return response
+        except Exception as e:
+            logger.error(f"Failed to sign in user {email}: {str(e)}", exc_info=True)
+            raise Exception(f"Invalid credentials: {str(e)}")
 
     @classmethod
     def sign_out(cls, access_token: str) -> Dict[str, Any]:

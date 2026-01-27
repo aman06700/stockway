@@ -6,8 +6,8 @@ from rest_framework import status
 from unittest.mock import patch, MagicMock
 from accounts.models import ShopkeeperProfile
 from accounts.serializers import (
-    SendOTPSerializer,
-    VerifyOTPSerializer,
+    SignInSerializer,
+    SignUpSerializer,
     UserSerializer,
     ShopkeeperProfileSerializer,
 )
@@ -28,7 +28,7 @@ class UserModelTests(TestCase):
         self.assertTrue(user.is_active)
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
-        self.assertEqual(user.role, "SHOPKEEPER")
+        self.assertEqual(user.role, "PENDING")
 
     def test_create_user_with_phone(self):
         """Test creating a user with phone number"""
@@ -148,67 +148,101 @@ class ShopkeeperProfileModelTests(TestCase):
         self.assertIsNone(profile.location)
 
 
-class SendOTPSerializerTests(TestCase):
-    """Test cases for SendOTPSerializer"""
+class SignUpSerializerTests(TestCase):
+    """Test cases for SignUpSerializer"""
 
-    def test_valid_email(self):
-        """Test serializer with valid email"""
-        data = {"email": "test@example.com"}
-        serializer = SendOTPSerializer(data=data)
+    def test_valid_data(self):
+        """Test serializer with valid data"""
+        data = {
+            "email": "test@example.com",
+            "password": "securepass123",
+            "confirm_password": "securepass123",
+        }
+        serializer = SignUpSerializer(data=data)
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data["email"], "test@example.com")
 
     def test_email_lowercase_normalization(self):
         """Test email is normalized to lowercase"""
-        data = {"email": "TEST@EXAMPLE.COM"}
-        serializer = SendOTPSerializer(data=data)
+        data = {
+            "email": "TEST@EXAMPLE.COM",
+            "password": "securepass123",
+            "confirm_password": "securepass123",
+        }
+        serializer = SignUpSerializer(data=data)
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data["email"], "test@example.com")
 
     def test_invalid_email_format(self):
         """Test serializer with invalid email format"""
-        data = {"email": "invalid-email"}
-        serializer = SendOTPSerializer(data=data)
+        data = {
+            "email": "invalid-email",
+            "password": "securepass123",
+            "confirm_password": "securepass123",
+        }
+        serializer = SignUpSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertIn("email", serializer.errors)
 
     def test_missing_email(self):
         """Test serializer with missing email"""
-        data = {}
-        serializer = SendOTPSerializer(data=data)
+        data = {"password": "securepass123", "confirm_password": "securepass123"}
+        serializer = SignUpSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertIn("email", serializer.errors)
 
+    def test_passwords_do_not_match(self):
+        """Test passwords must match"""
+        data = {
+            "email": "test@example.com",
+            "password": "password123",
+            "confirm_password": "different123",
+        }
+        serializer = SignUpSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("confirm_password", serializer.errors)
 
-class VerifyOTPSerializerTests(TestCase):
-    """Test cases for VerifyOTPSerializer"""
+    def test_password_too_short(self):
+        """Test password must be at least 6 characters"""
+        data = {
+            "email": "test@example.com",
+            "password": "short",
+            "confirm_password": "short",
+        }
+        serializer = SignUpSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("password", serializer.errors)
+
+
+class SignInSerializerTests(TestCase):
+    """Test cases for SignInSerializer"""
 
     def test_valid_data(self):
         """Test serializer with valid data"""
-        data = {"email": "test@example.com", "otp": "123456"}
-        serializer = VerifyOTPSerializer(data=data)
+        data = {"email": "test@example.com", "password": "securepass123"}
+        serializer = SignInSerializer(data=data)
         self.assertTrue(serializer.is_valid())
 
-    def test_otp_must_be_digits(self):
-        """Test OTP must contain only digits"""
-        data = {"email": "test@example.com", "otp": "12ab56"}
-        serializer = VerifyOTPSerializer(data=data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("otp", serializer.errors)
+    def test_email_lowercase_normalization(self):
+        """Test email is normalized to lowercase"""
+        data = {"email": "TEST@EXAMPLE.COM", "password": "securepass123"}
+        serializer = SignInSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data["email"], "test@example.com")
 
     def test_missing_email(self):
         """Test serializer with missing email"""
-        data = {"otp": "123456"}
-        serializer = VerifyOTPSerializer(data=data)
+        data = {"password": "securepass123"}
+        serializer = SignInSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertIn("email", serializer.errors)
 
-    def test_missing_otp(self):
-        """Test serializer with missing OTP"""
+    def test_missing_password(self):
+        """Test serializer with missing password"""
         data = {"email": "test@example.com"}
-        serializer = VerifyOTPSerializer(data=data)
+        serializer = SignInSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertIn("otp", serializer.errors)
+        self.assertIn("password", serializer.errors)
 
 
 class UserSerializerTests(TestCase):
@@ -275,54 +309,16 @@ class ShopkeeperProfileSerializerTests(TestCase):
         self.assertIsNotNone(updated_profile.location)
 
 
-class SendOTPViewTests(APITestCase):
-    """Test cases for SendOTPView"""
+class SignUpViewTests(APITestCase):
+    """Test cases for SignUpView"""
 
     def setUp(self):
         self.client = APIClient()
-        self.url = "/api/accounts/send-otp/"
+        self.url = "/api/accounts/signup/"
 
-    @patch("accounts.views.SupabaseService.send_otp")
-    def test_send_otp_success(self, mock_send_otp):
-        """Test successful OTP send"""
-        mock_send_otp.return_value = {"success": True}
-        data = {"email": "test@example.com"}
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data["success"])
-        mock_send_otp.assert_called_once_with("test@example.com")
-
-    def test_send_otp_invalid_email(self):
-        """Test sending OTP with invalid email"""
-        data = {"email": "invalid-email"}
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_send_otp_missing_email(self):
-        """Test sending OTP without email"""
-        data = {}
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    @patch("accounts.views.SupabaseService.send_otp")
-    def test_send_otp_service_error(self, mock_send_otp):
-        """Test OTP send with service error"""
-        mock_send_otp.side_effect = Exception("Service error")
-        data = {"email": "test@example.com"}
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class VerifyOTPViewTests(APITestCase):
-    """Test cases for VerifyOTPView"""
-
-    def setUp(self):
-        self.client = APIClient()
-        self.url = "/api/accounts/verify-otp/"
-
-    @patch("accounts.views.SupabaseService.verify_otp")
-    def test_verify_otp_success_new_user(self, mock_verify_otp):
-        """Test successful OTP verification with new user creation"""
+    @patch("accounts.views.SupabaseService.sign_up")
+    def test_signup_success(self, mock_sign_up):
+        """Test successful user sign up"""
         mock_user = MagicMock()
         mock_user.id = "supabase-uid-123"
         mock_session = MagicMock()
@@ -335,9 +331,89 @@ class VerifyOTPViewTests(APITestCase):
         mock_response = MagicMock()
         mock_response.user = mock_user
         mock_response.session = mock_session
-        mock_verify_otp.return_value = mock_response
+        mock_sign_up.return_value = mock_response
 
-        data = {"email": "newuser@example.com", "otp": "123456"}
+        data = {
+            "email": "newuser@example.com",
+            "password": "securepass123",
+            "confirm_password": "securepass123",
+        }
+        response = self.client.post(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("access_token", response.data)
+        self.assertIn("user", response.data)
+
+        # Verify user was created with PENDING role
+        user = User.objects.get(email="newuser@example.com")
+        self.assertEqual(user.supabase_uid, "supabase-uid-123")
+        self.assertEqual(user.role, "PENDING")
+        mock_sign_up.assert_called_once_with("newuser@example.com", "securepass123")
+
+    def test_signup_invalid_email(self):
+        """Test sign up with invalid email"""
+        data = {
+            "email": "invalid-email",
+            "password": "securepass123",
+            "confirm_password": "securepass123",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_signup_passwords_mismatch(self):
+        """Test sign up with mismatched passwords"""
+        data = {
+            "email": "test@example.com",
+            "password": "password123",
+            "confirm_password": "different123",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_signup_missing_fields(self):
+        """Test sign up with missing fields"""
+        data = {"email": "test@example.com"}
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch("accounts.views.SupabaseService.sign_up")
+    def test_signup_service_error(self, mock_sign_up):
+        """Test sign up with service error"""
+        mock_sign_up.side_effect = Exception("Sign up failed")
+        data = {
+            "email": "test@example.com",
+            "password": "securepass123",
+            "confirm_password": "securepass123",
+        }
+        response = self.client.post(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class SignInViewTests(APITestCase):
+    """Test cases for SignInView"""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = "/api/accounts/signin/"
+
+    @patch("accounts.views.SupabaseService.sign_in")
+    def test_signin_success_new_user(self, mock_sign_in):
+        """Test successful sign in with new user creation"""
+        mock_user = MagicMock()
+        mock_user.id = "supabase-uid-123"
+        mock_session = MagicMock()
+        mock_session.access_token = "access-token"
+        mock_session.refresh_token = "refresh-token"
+        mock_session.expires_in = 3600
+        mock_session.expires_at = 1234567890
+        mock_session.token_type = "bearer"
+
+        mock_response = MagicMock()
+        mock_response.user = mock_user
+        mock_response.session = mock_session
+        mock_sign_in.return_value = mock_response
+
+        data = {"email": "newuser@example.com", "password": "securepass123"}
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -347,12 +423,13 @@ class VerifyOTPViewTests(APITestCase):
         # Verify user was created
         user = User.objects.get(email="newuser@example.com")
         self.assertEqual(user.supabase_uid, "supabase-uid-123")
+        mock_sign_in.assert_called_once_with("newuser@example.com", "securepass123")
 
-    @patch("accounts.views.SupabaseService.verify_otp")
-    def test_verify_otp_existing_user(self, mock_verify_otp):
-        """Test OTP verification with existing user"""
+    @patch("accounts.views.SupabaseService.sign_in")
+    def test_signin_existing_user(self, mock_sign_in):
+        """Test sign in with existing user"""
         existing_user = User.objects.create_user(
-            email="existing@example.com", supabase_uid="existing-uid"
+            email="existing@example.com", supabase_uid="existing-uid", role="SHOPKEEPER"
         )
 
         mock_user = MagicMock()
@@ -367,28 +444,53 @@ class VerifyOTPViewTests(APITestCase):
         mock_response = MagicMock()
         mock_response.user = mock_user
         mock_response.session = mock_session
-        mock_verify_otp.return_value = mock_response
+        mock_sign_in.return_value = mock_response
 
-        data = {"email": "existing@example.com", "otp": "123456"}
+        data = {"email": "existing@example.com", "password": "securepass123"}
         response = self.client.post(self.url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Verify no duplicate user was created
         self.assertEqual(User.objects.filter(supabase_uid="existing-uid").count(), 1)
 
-    def test_verify_otp_invalid_format(self):
-        """Test OTP verification with invalid OTP format"""
-        data = {"email": "test@example.com", "otp": "abc123"}
+    def test_signin_inactive_user(self):
+        """Test sign in with inactive user"""
+        # Create inactive user
+        User.objects.create_user(
+            email="inactive@example.com", supabase_uid="inactive-uid", is_active=False
+        )
+
+        # Mock successful Supabase authentication
+        with patch("accounts.views.SupabaseService.sign_in") as mock_sign_in:
+            mock_user = MagicMock()
+            mock_user.id = "inactive-uid"
+            mock_session = MagicMock()
+            mock_session.access_token = "access-token"
+            mock_response = MagicMock()
+            mock_response.user = mock_user
+            mock_response.session = mock_session
+            mock_sign_in.return_value = mock_response
+
+            data = {"email": "inactive@example.com", "password": "securepass123"}
+            response = self.client.post(self.url, data, format="json")
+
+            # Inactive users return 401 (authentication failure)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_signin_invalid_credentials(self):
+        """Test sign in with invalid credentials"""
+        data = {"email": "test@example.com", "password": "wrongpassword"}
+
+        with patch("accounts.views.SupabaseService.sign_in") as mock_sign_in:
+            mock_sign_in.side_effect = Exception("Invalid credentials")
+            response = self.client.post(self.url, data, format="json")
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_signin_missing_fields(self):
+        """Test sign in with missing fields"""
+        data = {"email": "test@example.com"}
         response = self.client.post(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    @patch("accounts.views.SupabaseService.verify_otp")
-    def test_verify_otp_service_error(self, mock_verify_otp):
-        """Test OTP verification with service error"""
-        mock_verify_otp.side_effect = Exception("Invalid OTP")
-        data = {"email": "test@example.com", "otp": "123456"}
-        response = self.client.post(self.url, data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class LogoutViewTests(APITestCase):

@@ -1,5 +1,5 @@
 // User roles
-export type UserRole = 'SHOPKEEPER' | 'WAREHOUSE_MANAGER' | 'RIDER' | 'SUPER_ADMIN';
+export type UserRole = 'PENDING' | 'SHOPKEEPER' | 'WAREHOUSE_MANAGER' | 'RIDER' | 'SUPER_ADMIN';
 
 // User types
 export interface User {

@@ -5,37 +5,55 @@ from accounts.models import ShopkeeperProfile
 User = get_user_model()
 
 
-class SendOTPSerializer(serializers.Serializer):
-    """Serializer for sending OTP to email"""
+class SignUpSerializer(serializers.Serializer):
+    """Serializer for user sign up with email and password"""
 
     email = serializers.EmailField(
         required=True,
-        help_text="Email address to send OTP to",
+        help_text="Email address",
+    )
+    password = serializers.CharField(
+        required=True,
+        min_length=6,
+        write_only=True,
+        help_text="Password (minimum 6 characters)",
+    )
+    confirm_password = serializers.CharField(
+        required=True,
+        min_length=6,
+        write_only=True,
+        help_text="Confirm password",
     )
 
     def validate_email(self, value):
         """Validate email format"""
-        # EmailField already validates format, just return
         return value.lower()
 
+    def validate(self, data):
+        """Validate passwords match"""
+        if data["password"] != data["confirm_password"]:
+            raise serializers.ValidationError(
+                {"confirm_password": "Passwords do not match"}
+            )
+        return data
 
-class VerifyOTPSerializer(serializers.Serializer):
-    """Serializer for verifying OTP"""
 
-    email = serializers.EmailField(required=True, help_text="Email address")
-    otp = serializers.CharField(
-        max_length=6, required=True, help_text="6-digit OTP received via email"
+class SignInSerializer(serializers.Serializer):
+    """Serializer for user sign in with email and password"""
+
+    email = serializers.EmailField(
+        required=True,
+        help_text="Email address",
+    )
+    password = serializers.CharField(
+        required=True,
+        write_only=True,
+        help_text="Password",
     )
 
     def validate_email(self, value):
         """Validate email format"""
         return value.lower()
-
-    def validate_otp(self, value):
-        """Validate OTP format"""
-        if not value.isdigit():
-            raise serializers.ValidationError("OTP must contain only digits")
-        return value
 
 
 class UserSerializer(serializers.ModelSerializer):

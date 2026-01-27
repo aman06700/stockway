@@ -101,6 +101,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     """Custom User model with email-based authentication"""
 
     ROLE_CHOICES = [
+        ("PENDING", "Pending Approval"),
         ("SHOPKEEPER", "Shopkeeper"),
         ("RIDER", "Rider"),
         ("WAREHOUSE_MANAGER", "Warehouse Manager"),
@@ -115,7 +116,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     email = models.EmailField(unique=True, db_index=True)
     full_name = models.CharField(max_length=255, blank=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="SHOPKEEPER")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="PENDING")
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

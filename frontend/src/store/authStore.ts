@@ -9,7 +9,8 @@ interface AuthState {
 
   // Actions
   setUser: (user: User | null) => void;
-  login: (email: string, otp: string) => Promise<void>;
+  signUp: (email: string, password: string, confirmPassword: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   hasRole: (role: UserRole) => boolean;
@@ -24,10 +25,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ user, isAuthenticated: !!user });
   },
 
-  login: async (email, otp) => {
+  signUp: async (email, password, confirmPassword) => {
     set({ isLoading: true });
     try {
-      const authResponse = await authService.verifyOTP(email, otp);
+      const authResponse = await authService.signUp(email, password, confirmPassword);
+      set({
+        user: authResponse.user,
+        isAuthenticated: true,
+        isLoading: false
+      });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  signIn: async (email, password) => {
+    set({ isLoading: true });
+    try {
+      const authResponse = await authService.signIn(email, password);
       set({
         user: authResponse.user,
         isAuthenticated: true,

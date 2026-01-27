@@ -5,7 +5,6 @@ import RoleBasedRoute from './RoleBasedRoute';
 
 // Auth Pages
 import LoginPage from '@/pages/auth/LoginPage';
-import OTPVerificationPage from '@/pages/auth/OTPVerificationPage';
 
 // Shopkeeper Pages
 import ShopkeeperLayout from '@/pages/shopkeeper/ShopkeeperLayout';
@@ -43,6 +42,8 @@ import WarehouseManagement from '@/pages/admin/WarehouseManagement';
 // Common Pages
 import NotFoundPage from '@/pages/common/NotFoundPage';
 import UnauthorizedPage from '@/pages/common/UnauthorizedPage';
+import SignUpPage from "@/pages/auth/SignUpPage.tsx";
+import DocsPage from '@/pages/common/DocsPage';
 
 export default function AppRouter() {
   const { isAuthenticated, user } = useAuthStore();
@@ -70,9 +71,12 @@ export default function AppRouter() {
       {/* Root redirect */}
       <Route path="/" element={<Navigate to={getRootRedirect()} replace />} />
 
+      {/* Public documentation route */}
+      <Route path="/docs" element={<DocsPage />} />
+
       {/* Auth routes */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/verify-otp" element={<OTPVerificationPage />} />
+      <Route path="/signup" element={<SignUpPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* Shopkeeper routes */}

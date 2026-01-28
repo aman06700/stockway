@@ -1,142 +1,136 @@
-import { Box, Container, Typography, Grid, Paper, Divider, List, ListItem, ListItemText, Link } from '@mui/material';
+import { Box, Container, Typography, Grid, List, ListItem, ListItemText, useTheme, useMediaQuery, Drawer, Fab } from '@mui/material';
 import PublicNavbar from '@/components/common/PublicNavbar';
 import Footer from '@/components/common/Footer';
 import { useState } from 'react';
+import { DOCS_SECTIONS, DocSection } from './DocsContent';
+
+// Icons could be imported from mui icons, but using text/css for now to avoid dependency friction
+const MenuIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 export default function DocsPage() {
-  const [activeSection, setActiveSection] = useState('intro');
+  const [activeSectionId, setActiveSectionId] = useState(DOCS_SECTIONS[0].id);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const sections = [
-    { id: 'intro', label: 'Introduction' },
-    { id: 'auth', label: 'Authentication' },
-    { id: 'roles', label: 'User Roles' },
-    { id: 'orders', label: 'Orders & Fulfillment' },
-  ];
+  const activeSection = DOCS_SECTIONS.find(s => s.id === activeSectionId) || DOCS_SECTIONS[0];
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'auth':
-        return (
-          <>
-            <Typography variant="h4" fontWeight={600} gutterBottom>Authentication</Typography>
-            <Typography paragraph>
-              Stockway uses a secure OTP-based authentication system. All API requests must include the `Authorization` header.
-            </Typography>
-            <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default', mb: 3 }}>
-              <code>Authorization: Token &lt;your_token&gt;</code>
-            </Paper>
-            <Typography variant="h6" gutterBottom>Endpoints</Typography>
-            <List>
-              <ListItem>
-                <ListItemText primary="POST /api/auth/request-otp/" secondary="Request an OTP for your mobile number." />
-              </ListItem>
-              <ListItem>
-                <ListItemText primary="POST /api/auth/verify-otp/" secondary="Verify OTP and receive an auth token." />
-              </ListItem>
-            </List>
-          </>
-        );
-      case 'roles':
-        return (
-          <>
-            <Typography variant="h4" fontWeight={600} gutterBottom>User Roles</Typography>
-            <Typography paragraph>
-              The platform distinguishes between four primary roles, each with specific permissions.
-            </Typography>
-            <Typography variant="h6" gutterBottom>Shopkeeper</Typography>
-            <Typography paragraph color="text.secondary">
-              Can browse inventory, place orders, and track deliveries.
-            </Typography>
-            <Typography variant="h6" gutterBottom>Warehouse Manager</Typography>
-            <Typography paragraph color="text.secondary">
-              Manages inventory, approves orders, and assigns riders.
-            </Typography>
-            <Typography variant="h6" gutterBottom>Rider</Typography>
-            <Typography paragraph color="text.secondary">
-              Receives delivery assignments and updates delivery status.
-            </Typography>
-          </>
-        );
-      case 'orders':
-        return (
-          <>
-            <Typography variant="h4" fontWeight={600} gutterBottom>Orders & Fulfillment</Typography>
-            <Typography paragraph>
-              The order lifecycle drives the core logistics flow.
-            </Typography>
-            <Typography variant="h6" gutterBottom>Lifecycle Statuses</Typography>
-            <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default', mb: 3 }}>
-              <List dense>
-                <ListItem><ListItemText primary="PENDING" secondary="Order placed by shopkeeper." /></ListItem>
-                <ListItem><ListItemText primary="ACCEPTED" secondary="Warehouse has validated stock." /></ListItem>
-                <ListItem><ListItemText primary="ASSIGNED" secondary="Rider has been assigned." /></ListItem>
-                <ListItem><ListItemText primary="PICKED_UP" secondary="Rider has collected the package." /></ListItem>
-                <ListItem><ListItemText primary="DELIVERED" secondary="Order successfully delivered." /></ListItem>
-              </List>
-            </Paper>
-          </>
-        )
-      default:
-        return (
-          <>
-            <Typography variant="h4" fontWeight={600} gutterBottom>Introduction</Typography>
-            <Typography paragraph>
-              Welcome to the Stockway API documentation. Stockway is a unified platform for rural logistics, connecting shopkeepers to warehouses and riders.
-            </Typography>
-            <Typography paragraph>
-              This platform allows for seamless inventory management, order processing, and last-mile delivery tracking.
-            </Typography>
-            <Typography variant="h6" gutterBottom>Getting Started</Typography>
-            <Typography paragraph>
-              To get started, create an account via the signup page. Once authenticated, you can explore the API endpoints specific to your role.
-            </Typography>
-          </>
-        );
-    }
+  const handleSectionClick = (id: string) => {
+    setActiveSectionId(id);
+    setMobileOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const NavigationList = () => (
+    <List component="nav">
+      {DOCS_SECTIONS.map((section: DocSection) => (
+        <ListItem
+          button
+          key={section.id}
+          selected={activeSectionId === section.id}
+          onClick={() => handleSectionClick(section.id)}
+          sx={{
+            borderRadius: 2,
+            mb: 0.5,
+            borderLeft: activeSectionId === section.id ? `4px solid ${theme.palette.primary.main}` : '4px solid transparent',
+            bgcolor: activeSectionId === section.id ? 'action.selected' : 'transparent',
+            '&:hover': { bgcolor: 'action.hover' }
+          }}
+        >
+          <ListItemText
+            primary={section.title}
+            primaryTypographyProps={{
+              fontSize: '0.9rem',
+              fontWeight: activeSectionId === section.id ? 600 : 400,
+              color: activeSectionId === section.id ? 'primary.main' : 'text.primary'
+            }}
+          />
+        </ListItem>
+      ))}
+    </List>
+  );
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default', color: 'text.primary' }}>
       <PublicNavbar />
-      <Box sx={{ flex: 1, borderTop: 1, borderColor: 'divider' }}>
-        <Container maxWidth="lg" sx={{ py: 8 }}>
-          <Grid container spacing={8}>
-            {/* Sidebar */}
-            <Grid item xs={12} md={3}>
+
+      {/* Mobile Nav Toggle */}
+      {isMobile && (
+        <Fab
+          color="primary"
+          size="medium"
+          aria-label="menu"
+          onClick={() => setMobileOpen(true)}
+          sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 2000 }}
+        >
+          <MenuIcon />
+        </Fab>
+      )}
+
+      {/* Introduction Header */}
+      <Box sx={{ bgcolor: 'background.paper', py: 6, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Container maxWidth="lg">
+          <Typography variant="h3" fontWeight={800} gutterBottom>Documentation</Typography>
+          <Typography variant="h6" color="text.secondary" fontWeight={400}>
+            Everything you need to build, integrate, and deploy with Stockway.
+          </Typography>
+        </Container>
+      </Box>
+
+      <Box sx={{ flex: 1 }}>
+        <Container maxWidth="lg" sx={{ py: 6 }}>
+          <Grid container spacing={6}>
+            {/* Desktop Sidebar */}
+            <Grid item xs={12} md={3} sx={{ display: { xs: 'none', md: 'block' } }}>
               <Box sx={{ position: 'sticky', top: 100 }}>
-                <Typography variant="overline" color="text.secondary" fontWeight={600} sx={{ mb: 2, display: 'block' }}>
-                  Documentation
+                <Typography variant="overline" color="text.secondary" fontWeight={700} sx={{ px: 2, mb: 1, display: 'block' }}>
+                  CONTENTS
                 </Typography>
-                <List component="nav">
-                  {sections.map((section) => (
-                    <ListItem
-                      button
-                      key={section.id}
-                      selected={activeSection === section.id}
-                      onClick={() => setActiveSection(section.id)}
-                      sx={{
-                        borderRadius: 2,
-                        mb: 0.5,
-                        '&.Mui-selected': { bgcolor: 'action.selected' }
-                      }}
-                    >
-                      <ListItemText primary={section.label} primaryTypographyProps={{ fontSize: '0.95rem', fontWeight: activeSection === section.id ? 600 : 400 }} />
-                    </ListItem>
-                  ))}
-                </List>
+                <NavigationList />
               </Box>
             </Grid>
 
-            {/* Content */}
+            {/* Main Content */}
             <Grid item xs={12} md={9}>
-              <Box sx={{ maxWidth: '800px', minHeight: '600px' }}>
-                {renderContent()}
+              <Box
+                sx={{
+                  minHeight: '600px',
+                  '& h4': { mt: 0, mb: 3 },
+                  '& h5': { mt: 4, mb: 2 },
+                  '& h6': { mt: 3, mb: 1.5, fontWeight: 600 },
+                  '& p': { mb: 2, lineHeight: 1.7, color: 'text.secondary' },
+                  '& li': { mb: 1, color: 'text.secondary' },
+                  '& code': { bgcolor: 'action.hover', px: 0.8, py: 0.4, borderRadius: 1, fontFamily: 'monospace', fontSize: '0.85em' }
+                }}
+              >
+                {activeSection.content}
               </Box>
             </Grid>
           </Grid>
         </Container>
       </Box>
+
       <Footer />
+
+      {/* Mobile Drawer */}
+      <Drawer
+        anchor="left"
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        ModalProps={{ keepMounted: true }}
+        PaperProps={{ sx: { width: 280, p: 2 } }}
+      >
+        <Typography variant="h6" fontWeight={700} sx={{ px: 2, mb: 2, mt: 2 }}>
+          Documentation
+        </Typography>
+        <NavigationList />
+      </Drawer>
     </Box>
   );
 }

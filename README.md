@@ -1,145 +1,77 @@
-# API Backend
+# Stockway
 
 ## Project Overview
 
-API is a robust, modular monolithic backend built with Django and Django REST Framework (DRF). It serves as the core infrastructure for a rural supply and delivery platform, connecting Shopkeepers, Warehouses, and Riders. The system handles order management, inventory tracking, geospatial delivery assignments, and automated payouts.
+Stockway is a modular monolithic backend platform designed to modernize rural supply chains. It connects Shopkeepers, Warehouses, and Delivery Riders through a unified, geospatially aware system. The platform facilitates order management, real-time inventory tracking, intelligent rider assignment, and automated payouts, solving the logistical challenges of last-mile delivery in underserved markets.
 
-## Core Features
+## Core Capabilities
 
-*   **Shopkeepers**: Browse inventory, place orders from nearby warehouses, and track deliveries.
-*   **Warehouses**: Manage inventory, accept/reject orders, and oversee rider assignments.
-*   **Riders**: Receive delivery assignments based on location, update status, and track earnings.
-*   **Orders**: Full lifecycle management from creation to delivery with status tracking.
-*   **Payments**: Automated payout calculations based on delivery distance and successful completion.
-*   **Notifications**: Real-time system-wide notifications for all user roles.
-*   **Analytics**: Comprehensive dashboards for system, warehouse, and rider performance metrics.
-
-## Tech Stack
-
-*   **Language**: Python 3.13+
-*   **Framework**: Django 5.2, Django REST Framework 3.16
-*   **Database**: PostgreSQL (with PostGIS support) / Supabase
-*   **Caching & Queues**: Redis, Celery
-*   **Authentication**: OTP-based (Supabase Auth / Custom)
-*   **Geospatial**: `djangorestframework-gis`
-*   **Testing**: Pytest
+*   **Role-Based Access Control**: Distinct inter-operating roles for Shopkeepers, Warehouse Managers, Riders, and Super Admins.
+*   **Geospatial Intelligence**: Location-based warehousing and rider assignment using PostGIS.
+*   **Order Lifecycle Management**: End-to-end tracking from order placement to final delivery and payment settlement.
+*   **Real-Time Inventory**: Dynamic stock management across multiple warehouse locations.
+*   **Automated Payouts**: Distance-based fee calculation and rider earning management.
+*   **Secure Authentication**: OTP-based entry with strict permission enforcement.
 
 ## Architecture Summary
 
-The project follows a modular monolithic architecture. Each domain (orders, inventory, users) is encapsulated in its own Django app but shares a unified database and event bus.
+Stockway is built for reliability and scalability using a proven tech stack:
 
-*   **Synchronous API**: Handles immediate user requests (CRUD, reads).
-*   **Async Pipeline**: Celery workers handle background tasks like analytics computation, notifications, and payout processing.
+*   **Backend**: Python, Django, Django REST Framework (DRF)
+*   **Frontend**: React, TypeScript, Material UI
+*   **Database**: PostgreSQL with PostGIS extension (via Supabase)
+*   **Authentication**: Supabase Auth (OTP/Password) + JWT
+*   **Async Processing**: Redis and Celery for background tasks (analytics, notifications)
 
-## API Documentation
+## System Roles
 
-Full API documentation is available on our static documentation site:
+*   **Shopkeeper**: The primary customer; browses local inventories, places orders, and tracks incoming deliveries.
+*   **Warehouse Manager**: The supply node; oversees stock levels, manages incoming orders, and monitors rider activity.
+*   **Rider**: The logistics agent; receives proximity-based delivery tasks and earns based on successful fulfillments.
+*   **Super Admin**: The platform overseer; manages all users, warehouses, and financial flows.
 
-[**View API Documentation**](docs_site/index.html)
+## API & Documentation
 
-*(Note: If viewing locally, open `docs_site/index.html` in your browser)*
+Comprehensive API documentation, including endpoint definitions and data models, is available at:
 
-## Local Setup
+[**View API Documentation**](/docs_site/index.html)
 
-### Prerequisites
+*(Note: Ensure the local development server is running to access docs via the web interface at `/docs` if integrated, or view the static file directly.)*
 
-*   Python 3.13+
-*   PostgreSQL
-*   Redis
+## Local Development
 
-### Installation
+To run the platform locally:
 
-1.  **Clone the repository**
-    ```bash
-    git clone <repository-url>
-    cd backend
-    ```
+1.  **Backend**:
+    *   Clone the repo and navigate to `backend/`.
+    *   Create and activate a virtual environment.
+    *   Install dependencies: `pip install -r requirements.txt`.
+    *   Configure `.env` (database, auth keys).
+    *   Run migrations: `python manage.py migrate`.
+    *   Start server: `python manage.py runserver`.
 
-2.  **Create and activate a virtual environment**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    ```
+2.  **Frontend**:
+    *   Navigate to `frontend/`.
+    *   Install dependencies: `npm install`.
+    *   Start dev server: `npm run dev`.
 
-3.  **Install dependencies**
-    ```bash
-    pip install -r requirements.txt
-    ```
+## Project Status & Scope
 
-4.  **Environment Variables**
-    Create a `.env` file in the project root by copying the example:
-    ```bash
-    cp .env.example .env
-    ```
-    Update the `.env` file with your local database credentials and Supabase keys.
+**Current Status**: MVP (Minimum Viable Product)
+**Scope**: The current release focuses on core API functionality, basic frontend flows for all roles, and essential logistics logic. Advanced features like predictive analytics, fleet routing optimization, and offline-first mobile capabilities are currently out of scope.
 
-5.  **Database Setup**
-    ```bash
-    python manage.py migrate
-    ```
+## License & Ownership
 
-6.  **Create Superuser**
-    ```bash
-    python manage.py createsuperuser
-    ```
+**Owner**: Granth Agarwal
+**License**: MIT License. See [LICENSE](LICENSE) for details.
 
-7.  **Run the Development Server**
-    ```bash
-    python manage.py runserver
-    ```
+---
 
-### Running Celery (Optional for Async Tasks)
+## Pre-Production Cleanup Checklist
 
-Ensure Redis is running, then start the Celery worker:
-```bash
-celery -A backend worker -l info
-```
+Before deploying to a production environment, review and remove the following artifacts:
 
-## Running Tests
-
-The project uses `pytest` for testing.
-
-```bash
-pytest --keepdb
-```
-
-## Deployment
-
-The application is Docker-ready and can be deployed to platforms like Render, Railway, or AWS.
-
-1.  **Build Docker Image**
-    ```bash
-    docker build -t backend .
-    ```
-
-2.  **Run Container**
-    ```bash
-    docker run -p 8000:8000 --env-file .env gemini-backend
-    ```
-
-## Folder Structure
-
-```
-.
-├── accounts/         # User authentication and profiles
-├── analytics/        # System and performance analytics
-├── backend/          # Project settings and configuration
-├── configs/          # Environment and app configurations
-├── core/             # Shared utilities and base classes
-├── delivery/         # Delivery tracking logic
-├── docs_site/        # Static API documentation site
-├── inventory/        # Warehouse inventory management
-├── notifications/    # User notification system
-├── orders/           # Order processing and lifecycle
-├── payments/         # Payouts and financial records
-├── riders/           # Rider management and location
-├── shopkeepers/      # Shopkeeper specific views
-├── warehouses/       # Warehouse administration
-├── manage.py         # Django management script
-├── requirements.txt  # Python dependencies
-└── API_DOCUMENTATION.md # Markdown API reference
-```
-
-## License
-
-MIT License
+*   **Scripts**: `test_order_api.sh`, `create_test_order.py`, `load_test.js`, `verify_auth_migration.sh`, `apply_supabase_optimization.sh`
+*   **Docs**: `flow.md`, `plans.md`, `GEMINI.md` (Internal guides), `WARP.md`
+*   **Config**: Ensure `.env` contains production-grade secrets, not example values.
+*   **Data**: Flush any test data generated by `create_test_order.py` from the primary database.

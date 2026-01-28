@@ -1,337 +1,373 @@
-import { Box, Container, Typography, Button, Grid, Card, CardContent, alpha } from '@mui/material';
+import { Box, Container, Typography, Button, Grid, Card, CardContent, Divider } from '@mui/material';
 import {
   Store,
   Warehouse,
   DeliveryDining,
-  AdminPanelSettings,
   TrendingUp,
   Speed,
-  Security
+  Security,
+  ArrowForward,
+  CheckCircleOutline,
+  Inventory2,
+  LocalShipping,
+  ShoppingCart
 } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import PublicNavbar from '@/components/common/PublicNavbar';
+import Footer from '@/components/common/Footer';
 
 export default function LandingPage() {
-  const features = [
+  const ecosystem = [
     {
-      icon: <Store sx={{ fontSize: 48 }} />,
+      icon: <Store sx={{ fontSize: 32 }} />,
       title: 'For Shopkeepers',
-      description: 'Browse inventory, place orders, and track deliveries in real-time from nearby warehouses.',
+      description: 'Order inventory from nearby warehouses and track deliveries in real-time.',
     },
     {
-      icon: <Warehouse sx={{ fontSize: 48 }} />,
+      icon: <Warehouse sx={{ fontSize: 32 }} />,
       title: 'For Warehouses',
-      description: 'Manage inventory, fulfill orders, coordinate with riders, and optimize your operations.',
+      description: 'Manage stock levels, process incoming orders, and assign riders efficiently.',
     },
     {
-      icon: <DeliveryDining sx={{ fontSize: 48 }} />,
+      icon: <DeliveryDining sx={{ fontSize: 32 }} />,
       title: 'For Riders',
-      description: 'Accept deliveries, navigate routes, track earnings, and deliver with efficiency.',
-    },
-    {
-      icon: <AdminPanelSettings sx={{ fontSize: 48 }} />,
-      title: 'Admin Control',
-      description: 'Full platform oversight with analytics, user management, and system monitoring.',
+      description: 'Receive delivery tasks, navigate to locations, and track earnings.',
     },
   ];
 
-  const benefits = [
+  const workflow = [
+    {
+      step: '01',
+      title: 'Order',
+      desc: 'Shopkeeper browses catalog and places order.',
+      icon: <ShoppingCart color="primary" />,
+    },
+    {
+      step: '02',
+      title: 'Process',
+      desc: 'Warehouse accepts order and assigns a rider.',
+      icon: <Inventory2 color="warning" />,
+    },
+    {
+      step: '03',
+      title: 'Deliver',
+      desc: 'Rider picks up package and delivers to shop.',
+      icon: <LocalShipping color="success" />,
+    },
+  ];
+
+  const capabilities = [
     {
       icon: <TrendingUp />,
-      title: 'Real-time Analytics',
-      description: 'Track orders, inventory, and performance metrics live.',
+      title: 'Analytics',
+      description: 'Data-driven insights for better decision making.',
     },
     {
       icon: <Speed />,
-      title: 'Lightning Fast',
-      description: 'Optimized for speed with instant updates and notifications.',
+      title: 'Speed',
+      description: 'Optimized routing for faster delivery times.',
     },
     {
       icon: <Security />,
-      title: 'Secure & Reliable',
-      description: 'Enterprise-grade security with role-based access control.',
+      title: 'Security',
+      description: 'End-to-end encryption for all transaction data.',
+    },
+    {
+      icon: <CheckCircleOutline />,
+      title: 'Reliability',
+      description: '99.9% uptime guarantee for business continuity.',
     },
   ];
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary', display: 'flex', flexDirection: 'column' }}>
       <PublicNavbar />
 
-      {/* Hero Section */}
+      {/* Hero Section - Full Viewport Height */}
       <Box
         sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          pt: { xs: 8, md: 12 },
-          pb: { xs: 8, md: 12 },
-          background: (theme) =>
-            theme.palette.mode === 'dark'
-              ? `linear-gradient(180deg, ${alpha(theme.palette.primary.dark, 0.1)} 0%, ${alpha(
-                  theme.palette.background.default,
-                  1
-                )} 100%)`
-              : `linear-gradient(180deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(
-                  theme.palette.background.default,
-                  1
-                )} 100%)`,
+          minHeight: 'calc(100vh - 64px)',
+          display: 'flex',
+          alignItems: 'center',
+          borderBottom: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.default',
+          py: { xs: 8, md: 0 } // Vertical padding only on mobile where height might overflow
         }}
       >
-        {/* Animated background pattern */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.03,
-            backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-            pointerEvents: 'none',
-          }}
-        />
+        <Container maxWidth="lg">
+          <Grid container spacing={{ xs: 8, md: 8 }} alignItems="center">
+            {/* Left Column: Narrative */}
+            <Grid item xs={12} md={6}>
+              <Box maxWidth="600px">
+                <Typography
+                  variant="overline"
+                  sx={{
+                    fontWeight: 600,
+                    color: 'primary.main',
+                    letterSpacing: '0.1em',
+                    mb: 2,
+                    display: 'block'
+                  }}
+                >
+                  MODULAR LOGISTICS PLATFORM
+                </Typography>
+                <Typography
+                  variant="h1"
+                  sx={{
+                    fontSize: { xs: '2.5rem', md: '4.5rem' },
+                    fontWeight: 700,
+                    letterSpacing: '-0.03em',
+                    lineHeight: 1.1,
+                    mb: 3,
+                    color: 'text.primary',
+                  }}
+                >
+                  The <Box component="span" sx={{ color: 'text.secondary' }}>operating system</Box> for rural commerce.
+                </Typography>
 
-        <Container maxWidth="lg" sx={{ position: 'relative' }}>
-          <Box textAlign="center" maxWidth="800px" mx="auto">
-            <Typography
-              variant="h1"
-              sx={{
-                fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' },
-                fontWeight: 800,
-                mb: 3,
-                background: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)'
-                    : 'linear-gradient(135deg, #2563eb 0%, #8b5cf6 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Seamless Supply Chain Management
-            </Typography>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ mb: 5, fontSize: '1.25rem', lineHeight: 1.6, maxWidth: '520px' }}
+                >
+                  Stockway is the infrastructure connecting shopkeepers, warehouses, and logistics fleets in one seamless network.
+                </Typography>
 
-            <Typography
-              variant="h5"
-              color="text.secondary"
-              sx={{ mb: 5, lineHeight: 1.6, fontWeight: 400 }}
-            >
-              Connect shopkeepers, warehouses, and riders in one powerful platform.
-              Real-time inventory tracking, order management, and delivery coordination.
-            </Typography>
+                <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                  <Button
+                    component={RouterLink}
+                    to="/signup"
+                    variant="contained"
+                    size="large"
+                    endIcon={<ArrowForward />}
+                    sx={{
+                      px: 4,
+                      py: 1.5,
+                      borderRadius: 2,
+                      fontSize: '1rem',
+                      textTransform: 'none',
+                    }}
+                  >
+                    Start Free Trial
+                  </Button>
+                  <Button
+                    component={RouterLink}
+                    to="/docs"
+                    variant="text"
+                    size="large"
+                    sx={{
+                      px: 3,
+                      py: 1.5,
+                      fontSize: '1rem',
+                      textTransform: 'none',
+                      color: 'text.primary'
+                    }}
+                  >
+                    View Documentation
+                  </Button>
+                </Box>
+              </Box>
+            </Grid>
 
-            <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
-              <Button
-                component={RouterLink}
-                to="/signup"
-                variant="contained"
-                size="large"
+            {/* Right Column: System Schematic */}
+            <Grid item xs={12} md={6}>
+              <Box
                 sx={{
-                  px: 5,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                  background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(96, 165, 250, 0.3)',
-                  },
-                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  p: 4,
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 4,
+                  bgcolor: 'background.paper',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 3,
+                  maxWidth: '500px',
+                  mx: 'auto',
+                  boxShadow: '0px 0px 0px 1px rgba(0,0,0,0.05)'
                 }}
               >
-                Get Started Free
-              </Button>
-              <Button
-                component={RouterLink}
-                to="/login"
-                variant="outlined"
-                size="large"
-                sx={{
-                  px: 5,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                  borderWidth: 2,
-                  '&:hover': {
-                    borderWidth: 2,
-                    transform: 'translateY(-2px)',
-                  },
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                Sign In
-              </Button>
-            </Box>
-          </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>
+                    System Architecture
+                  </Typography>
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main', boxShadow: '0 0 8px rgba(16, 185, 129, 0.5)' }} />
+                </Box>
+
+                {/* Architecture Nodes */}
+                {[
+                  { label: 'Shopkeeper App', sub: 'Order Placement', icon: <Store fontSize="small" /> },
+                  { label: 'Warehouse RMS', sub: 'Inventory Sync', icon: <Warehouse fontSize="small" /> },
+                  { label: 'Rider Client', sub: 'Route Optimization', icon: <DeliveryDining fontSize="small" /> }
+                ].map((node, i) => (
+                  <Box key={i} sx={{ position: 'relative' }}>
+                    {i !== 2 && (
+                      <Box sx={{
+                        position: 'absolute', left: 24, top: 48, bottom: -24, width: 2, bgcolor: 'divider', zIndex: 0
+                      }} />
+                    )}
+                    <Box display="flex" alignItems="center" gap={2} sx={{ position: 'relative', zIndex: 1, bgcolor: 'background.paper', py: 1 }}>
+                      <Box sx={{
+                        width: 48, height: 48, borderRadius: 2, border: 1, borderColor: 'divider',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default'
+                      }}>
+                        {node.icon}
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={600}>{node.label}</Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{node.sub}</Typography>
+                      </Box>
+                      <Box sx={{ ml: 'auto' }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'divider' }} />
+                      </Box>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </Grid>
+          </Grid>
         </Container>
       </Box>
 
-      {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
-        <Box textAlign="center" mb={8}>
-          <Typography
-            variant="h2"
-            sx={{
-              fontSize: { xs: '2rem', md: '2.5rem' },
-              fontWeight: 700,
-              mb: 2,
-            }}
-          >
-            Built for Everyone in the Supply Chain
-          </Typography>
-          <Typography variant="h6" color="text.secondary" maxWidth="600px" mx="auto">
-            Whether you're a shopkeeper, warehouse manager, rider, or admin,
-            Stockway has the tools you need.
-          </Typography>
-        </Box>
-
-        <Grid container spacing={4}>
-          {features.map((feature, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card
-                sx={{
-                  height: '100%',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: (theme) =>
-                      theme.palette.mode === 'dark'
-                        ? '0 12px 32px rgba(0, 0, 0, 0.5)'
-                        : '0 12px 32px rgba(0, 0, 0, 0.15)',
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      p: 2,
-                      borderRadius: 3,
-                      bgcolor: (theme) =>
-                        alpha(theme.palette.primary.main, 0.1),
-                      color: 'primary.main',
-                      mb: 3,
-                    }}
-                  >
-                    {feature.icon}
-                  </Box>
-                  <Typography variant="h5" fontWeight={600} gutterBottom>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" lineHeight={1.7}>
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-
-      {/* Benefits Section */}
-      <Box sx={{ bgcolor: 'background.paper', py: { xs: 8, md: 12 } }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={6} alignItems="center">
-            {benefits.map((benefit, index) => (
+      {/* Section 2: Ecosystem (Who it's for) */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+        <Container maxWidth="lg" sx={{ py: 12 }}>
+          <Box mb={8} textAlign="center">
+            <Typography variant="h3" fontWeight={700} letterSpacing="-0.02em" mb={2}>
+              Built for the entire chain
+            </Typography>
+            <Typography variant="body1" color="text.secondary" maxWidth="600px" mx="auto">
+              Every stakeholder gets a dedicated interface tailored to their specific workflow needs.
+            </Typography>
+          </Box>
+          <Grid container spacing={4}>
+            {ecosystem.map((role, index) => (
               <Grid item xs={12} md={4} key={index}>
-                <Box display="flex" flexDirection="column" alignItems="center" textAlign="center">
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
-                      color: 'primary.main',
+                <Card sx={{ height: '100%', bgcolor: 'background.default' }} variant="outlined">
+                  <CardContent sx={{ p: 4 }}>
+                    <Box sx={{
+                      width: 56, height: 56,
+                      borderRadius: 2,
+                      bgcolor: 'background.paper',
+                      border: 1,
+                      borderColor: 'divider',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
                       mb: 3,
-                    }}
-                  >
-                    {benefit.icon}
-                  </Box>
-                  <Typography variant="h5" fontWeight={600} gutterBottom>
-                    {benefit.title}
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    {benefit.description}
-                  </Typography>
-                </Box>
+                      color: 'text.primary'
+                    }}>
+                      {role.icon}
+                    </Box>
+                    <Typography variant="h5" gutterBottom fontWeight={600}>
+                      {role.title}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      {role.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
               </Grid>
             ))}
           </Grid>
         </Container>
       </Box>
 
-      {/* CTA Section */}
-      <Container maxWidth="md" sx={{ py: { xs: 8, md: 12 } }}>
-        <Card
-          sx={{
-            p: { xs: 4, md: 6 },
-            textAlign: 'center',
-            background: (theme) =>
-              theme.palette.mode === 'dark'
-                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.2)} 0%, ${alpha(
-                    theme.palette.secondary.dark,
-                    0.2
-                  )} 100%)`
-                : `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.15)} 0%, ${alpha(
-                    theme.palette.secondary.light,
-                    0.15
-                  )} 100%)`,
-            borderRadius: 4,
-          }}
-        >
-          <Typography
-            variant="h3"
-            sx={{
-              fontSize: { xs: '1.75rem', md: '2.5rem' },
-              fontWeight: 700,
-              mb: 2,
-            }}
-          >
-            Ready to Transform Your Supply Chain?
+      {/* Section 3: Workflow (How it works) */}
+      <Container maxWidth="lg" sx={{ py: 16 }}>
+        <Box mb={10} textAlign={{ xs: 'left', md: 'center' }}>
+          <Typography variant="h3" fontWeight={700} letterSpacing="-0.02em" mb={2}>
+            How Stockway Works
           </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-            Join Stockway today and experience seamless logistics management.
+        </Box>
+
+        <Grid container spacing={0} sx={{
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: { xs: 4, md: 4 },
+          overflow: 'hidden'
+        }}>
+          {workflow.map((step, index) => (
+            <Grid item xs={12} md={4} key={index} sx={{
+              borderBottom: { xs: 1, md: 0 },
+              borderRight: { xs: 0, md: 1 },
+              borderColor: 'divider',
+              '&:last-child': { borderRight: 0, borderBottom: 0 }
+            }}>
+              <Box sx={{ p: 6, height: '100%', bgcolor: 'background.paper', transition: 'background-color 0.2s', '&:hover': { bgcolor: 'background.default' } }}>
+                <Box display="flex" justifyContent="space-between" mb={4}>
+                  <Typography variant="h2" fontWeight={800} sx={{ opacity: 0.1 }}>{step.step}</Typography>
+                  {step.icon}
+                </Box>
+                <Typography variant="h5" fontWeight={600} gutterBottom>{step.title}</Typography>
+                <Typography variant="body1" color="text.secondary">{step.desc}</Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+
+      {/* Section 4: Capabilities (Platform) */}
+      <Box sx={{ borderTop: 1, borderColor: 'divider', bgcolor: 'background.default' }}>
+        <Container maxWidth="lg" sx={{ py: 16 }}>
+          <Grid container spacing={8} alignItems="center">
+            <Grid item xs={12} md={5}>
+              <Typography variant="h3" fontWeight={700} mb={3}>
+                Enterprise-grade <br /> capabilities
+              </Typography>
+              <Typography variant="body1" color="text.secondary" mb={4} fontSize="1.125rem">
+                Scalable infrastructure designed to handle high-frequency transactions and large-scale inventory management without compromising performance.
+              </Typography>
+              <Button
+                variant="outlined"
+                size="large"
+                endIcon={<ArrowForward />}
+                sx={{ textTransform: 'none' }}
+                component={RouterLink}
+                to="/signup"
+              >
+                Explore Features
+              </Button>
+            </Grid>
+            <Grid item xs={12} md={7}>
+              <Grid container spacing={4}>
+                {capabilities.map((cap, i) => (
+                  <Grid item xs={12} sm={6} key={i}>
+                    <Box sx={{ p: 3, border: 1, borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
+                      <Box sx={{ mb: 2, color: 'text.primary' }}>{cap.icon}</Box>
+                      <Typography variant="h6" fontWeight={600} gutterBottom>{cap.title}</Typography>
+                      <Typography variant="body2" color="text.secondary">{cap.description}</Typography>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Section 5: Final CTA */}
+      <Box sx={{ borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper', py: 16 }}>
+        <Container maxWidth="md" sx={{ textAlign: 'center' }}>
+          <Typography variant="h2" fontWeight={700} mb={3} letterSpacing="-0.03em">
+            Ready to optimize your supply chain?
+          </Typography>
+          <Typography variant="h6" color="text.secondary" fontWeight={400} mb={6} maxWidth="600px" mx="auto">
+            Join hundreds of businesses using Stockway to streamline their delivery network.
           </Typography>
           <Button
             component={RouterLink}
             to="/signup"
             variant="contained"
             size="large"
-            sx={{
-              px: 6,
-              py: 2,
-              fontSize: '1.1rem',
-              background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 8px 24px rgba(96, 165, 250, 0.3)',
-              },
-              transition: 'all 0.3s ease',
-            }}
+            sx={{ px: 8, py: 2, fontSize: '1.125rem', borderRadius: 2, textTransform: 'none' }}
           >
-            Create Your Account
+            Get Started Now
           </Button>
-        </Card>
-      </Container>
-
-      {/* Footer */}
-      <Box
-        sx={{
-          borderTop: '1px solid',
-          borderColor: 'divider',
-          py: 4,
-          textAlign: 'center',
-        }}
-      >
-        <Container maxWidth="lg">
-          <Typography variant="body2" color="text.secondary">
-            © {new Date().getFullYear()} Stockway. All rights reserved.
-          </Typography>
         </Container>
       </Box>
+
+      <Footer />
     </Box>
   );
 }

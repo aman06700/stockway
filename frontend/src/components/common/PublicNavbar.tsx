@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Container, Box, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 
@@ -9,37 +9,62 @@ export default function PublicNavbar() {
       color="default"
       elevation={0}
       sx={{
-        backdropFilter: 'blur(8px)',
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+        backgroundColor: 'background.default',
         borderBottom: '1px solid',
         borderColor: 'divider',
+        color: 'text.primary',
       }}
     >
       <Container maxWidth="lg">
-        <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
-          <Typography
-            variant="h5"
-            component={RouterLink}
-            to="/"
-            sx={{
-              fontWeight: 800,
-              background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textDecoration: 'none',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Stockway
-          </Typography>
+        <Toolbar disableGutters sx={{ justifyContent: 'space-between', height: 64 }}>
+          {/* Logo Section */}
+          <Box display="flex" alignItems="center" gap={4}>
+            <Typography
+              variant="h6"
+              component={RouterLink}
+              to="/"
+              sx={{
+                fontWeight: 700,
+                color: 'text.primary',
+                textDecoration: 'none',
+                letterSpacing: '-0.02em',
+                fontSize: '1.25rem',
+              }}
+            >
+              Stockway
+            </Typography>
 
+            {/* Desktop Nav Links */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 3 }}>
+              <Link
+                component={RouterLink}
+                to="/docs"
+                underline="none"
+                sx={{
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary' },
+                  transition: 'color 0.2s',
+                }}
+              >
+                Docs
+              </Link>
+            </Box>
+          </Box>
+
+          {/* Right Action Section */}
           <Box display="flex" alignItems="center" gap={2}>
             <ThemeToggle />
             <Button
               component={RouterLink}
               to="/login"
-              color="inherit"
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+              variant="text"
+              sx={{
+                display: { xs: 'none', sm: 'inline-flex' },
+                color: 'text.primary',
+                fontWeight: 500,
+              }}
             >
               Sign In
             </Button>
@@ -48,10 +73,8 @@ export default function PublicNavbar() {
               to="/signup"
               variant="contained"
               sx={{
-                background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                },
+                fontWeight: 600,
+                px: 2.5,
               }}
             >
               Get Started

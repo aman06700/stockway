@@ -1,128 +1,120 @@
 import { createTheme } from '@mui/material/styles';
+import { getPalette } from './palette';
+import { typography } from './typography';
 
-export const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#2563eb', // Blue
-      light: '#60a5fa',
-      dark: '#1e40af',
-      contrastText: '#ffffff',
+// Remove all shadows
+const shadows = Array(25).fill('none') as any;
+
+export const createAppTheme = (mode: 'light' | 'dark') => {
+  const palette = getPalette(mode);
+
+  return createTheme({
+    palette,
+    typography,
+    shadows, // Global shadow removal
+    shape: {
+      borderRadius: 6, // Tighter radius for a more technical feel
     },
-    secondary: {
-      main: '#8b5cf6', // Purple
-      light: '#a78bfa',
-      dark: '#6d28d9',
-      contrastText: '#ffffff',
-    },
-    success: {
-      main: '#10b981',
-      light: '#34d399',
-      dark: '#059669',
-    },
-    warning: {
-      main: '#f59e0b',
-      light: '#fbbf24',
-      dark: '#d97706',
-    },
-    error: {
-      main: '#ef4444',
-      light: '#f87171',
-      dark: '#dc2626',
-    },
-    info: {
-      main: '#3b82f6',
-      light: '#60a5fa',
-      dark: '#2563eb',
-    },
-    background: {
-      default: '#f9fafb',
-      paper: '#ffffff',
-    },
-    text: {
-      primary: '#111827',
-      secondary: '#6b7280',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontWeight: 700,
-      fontSize: '2.5rem',
-      lineHeight: 1.2,
-    },
-    h2: {
-      fontWeight: 700,
-      fontSize: '2rem',
-      lineHeight: 1.3,
-    },
-    h3: {
-      fontWeight: 600,
-      fontSize: '1.5rem',
-      lineHeight: 1.4,
-    },
-    h4: {
-      fontWeight: 600,
-      fontSize: '1.25rem',
-      lineHeight: 1.5,
-    },
-    h5: {
-      fontWeight: 600,
-      fontSize: '1.125rem',
-      lineHeight: 1.5,
-    },
-    h6: {
-      fontWeight: 600,
-      fontSize: '1rem',
-      lineHeight: 1.5,
-    },
-    button: {
-      textTransform: 'none',
-      fontWeight: 600,
-    },
-  },
-  shape: {
-    borderRadius: 8,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          padding: '10px 24px',
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          },
-        },
-        sizeLarge: {
-          padding: '12px 32px',
-          fontSize: '1rem',
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          borderRadius: 12,
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 8,
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          body: {
+            backgroundColor: palette.background.default,
+            scrollbarWidth: 'thin',
+            '&::-webkit-scrollbar': {
+                width: '6px',
+                height: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+                background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+                backgroundColor: mode === 'dark' ? '#3f3f46' : '#d4d4d8',
+                borderRadius: '3px',
+            }
           },
         },
       },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          fontWeight: 500,
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            fontWeight: 500,
+            boxShadow: 'none',
+            border: '1px solid transparent',
+            '&:hover': {
+              boxShadow: 'none',
+              // Subtle darkening/lightening handled by default action.hover, but we can enforce strictness
+            },
+          },
+          contained: {
+             '&:hover': {
+                boxShadow: 'none',
+             }
+          },
+          outlined: {
+            borderColor: mode === 'dark' ? '#3f3f46' : '#d4d4d8', // Zinc 700 : Zinc 300
+            color: mode === 'dark' ? '#f4f4f5' : '#18181b',
+            '&:hover': {
+                 backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                 borderColor: mode === 'dark' ? '#52525b' : '#a1a1aa',
+            }
+          }
         },
       },
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none', // Remove MUI gradient overlay
+            backgroundColor: palette.background.paper,
+            border: `1px solid ${palette.divider}`,
+            boxShadow: 'none',
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
+          },
+        },
+      },
+      MuiTextField: {
+        styleOverrides: {
+          root: {
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: mode === 'dark' ? 'rgba(0,0,0,0.2)' : '#ffffff',
+              '& fieldset': {
+                borderColor: palette.divider,
+              },
+              '&:hover fieldset': {
+                borderColor: mode === 'dark' ? '#71717a' : '#a1a1aa', // Zinc 500
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: palette.primary.main,
+                borderWidth: '1px', // Keep it thin, no thick focus rings
+              },
+            },
+          },
+        },
+      },
+      MuiAppBar: {
+        styleOverrides: {
+            root: {
+                backgroundColor: palette.background.default,
+                borderBottom: `1px solid ${palette.divider}`,
+                boxShadow: 'none',
+                color: palette.text.primary,
+            }
+        }
+      },
+      MuiDrawer: {
+        styleOverrides: {
+            paper: {
+                backgroundColor: palette.background.default,
+                borderRight: `1px solid ${palette.divider}`,
+            }
+        }
+      }
     },
-  },
-});
+  });
+};

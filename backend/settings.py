@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     "shopkeepers",
     "notifications",  # Notification system
     "analytics",  # Analytics and reporting
-    "django_extensions"
+    "django_extensions",
 ]
 
 MIDDLEWARE = [

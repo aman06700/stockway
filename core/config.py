@@ -53,7 +53,7 @@ class Config:
     UPSTASH_REDIS_REST_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 
     # Render deployment settings
-    RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
+    RENDER_EXTERNAL_URL = "stockway.onrender.com"
 
     @classmethod
     def get_redis_url(cls):

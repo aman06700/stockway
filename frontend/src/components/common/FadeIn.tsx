@@ -7,7 +7,7 @@ interface FadeInProps {
     /** Delay before animation starts in ms */
     delay?: number;
     /** Direction to slide from */
-    direction?: 'up' | 'down' | 'left' | 'right' | 'none';
+    direction?: 'up' | 'down' | 'left' | 'right' | 'none' | 'scale';
     /** Distance to travel in pixels */
     distance?: number;
     /** Additional sx props */
@@ -45,6 +45,8 @@ export default function FadeIn({
                 return `translate3d(-${distance}px, 0, 0)`;
             case 'none':
                 return 'translate3d(0, 0, 0)';
+            case 'scale':
+                return 'scale(0.95)';
             default:
                 return `translate3d(0, ${distance}px, 0)`;
         }

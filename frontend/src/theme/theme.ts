@@ -1,6 +1,7 @@
 import { createTheme } from '@mui/material/styles';
 import { getPalette } from './palette';
 import { typography } from './typography';
+import { durations, easings } from './motion';
 
 // Remove all shadows
 const shadows = Array(25).fill('none') as any;
@@ -41,9 +42,12 @@ export const createAppTheme = (mode: 'light' | 'dark') => {
             fontWeight: 500,
             boxShadow: 'none',
             border: '1px solid transparent',
+            transition: `background-color ${durations.fast}ms ${easings.standard}, border-color ${durations.fast}ms ${easings.standard}, transform ${durations.fast}ms ${easings.standard}`,
             '&:hover': {
               boxShadow: 'none',
-              // Subtle darkening/lightening handled by default action.hover, but we can enforce strictness
+            },
+            '&:active': {
+              transform: 'scale(0.98)',
             },
           },
           contained: {
@@ -52,7 +56,7 @@ export const createAppTheme = (mode: 'light' | 'dark') => {
              }
           },
           outlined: {
-            borderColor: mode === 'dark' ? '#3f3f46' : '#d4d4d8', // Zinc 700 : Zinc 300
+            borderColor: mode === 'dark' ? '#3f3f46' : '#d4d4d8',
             color: mode === 'dark' ? '#f4f4f5' : '#18181b',
             '&:hover': {
                  backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
@@ -64,10 +68,11 @@ export const createAppTheme = (mode: 'light' | 'dark') => {
       MuiCard: {
         styleOverrides: {
           root: {
-            backgroundImage: 'none', // Remove MUI gradient overlay
+            backgroundImage: 'none',
             backgroundColor: palette.background.paper,
             border: `1px solid ${palette.divider}`,
             boxShadow: 'none',
+            transition: `border-color ${durations.base}ms ${easings.standard}, background-color ${durations.base}ms ${easings.standard}`,
           },
         },
       },
@@ -83,15 +88,17 @@ export const createAppTheme = (mode: 'light' | 'dark') => {
           root: {
             '& .MuiOutlinedInput-root': {
               backgroundColor: mode === 'dark' ? 'rgba(0,0,0,0.2)' : '#ffffff',
+              transition: `border-color ${durations.base}ms ${easings.standard}`,
               '& fieldset': {
                 borderColor: palette.divider,
+                transition: `border-color ${durations.base}ms ${easings.standard}`,
               },
               '&:hover fieldset': {
-                borderColor: mode === 'dark' ? '#71717a' : '#a1a1aa', // Zinc 500
+                borderColor: mode === 'dark' ? '#71717a' : '#a1a1aa',
               },
               '&.Mui-focused fieldset': {
                 borderColor: palette.primary.main,
-                borderWidth: '1px', // Keep it thin, no thick focus rings
+                borderWidth: '1px',
               },
             },
           },

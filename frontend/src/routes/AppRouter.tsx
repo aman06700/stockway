@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import PrivateRoute from './PrivateRoute';
 import RoleBasedRoute from './RoleBasedRoute';
+import PageTransition from '@/components/common/PageTransition';
 
 // Landing & Auth Pages
 import LandingPage from '@/pages/common/LandingPage';
@@ -69,111 +70,113 @@ export default function AppRouter() {
   const { isAuthenticated } = useAuthStore();
 
   return (
-    <Routes>
-      {/* Landing page - public route */}
-      <Route
-        path="/"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
-      />
+    <PageTransition>
+      <Routes>
+        {/* Landing page - public route */}
+        <Route
+          path="/"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
+        />
 
-      {/* Dashboard redirect based on role */}
-      <Route
-        path="/dashboard"
-        element={
-          <PrivateRoute>
-            <DashboardRedirect />
-          </PrivateRoute>
-        }
-      />
+        {/* Dashboard redirect based on role */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <DashboardRedirect />
+            </PrivateRoute>
+          }
+        />
 
-      {/* Public documentation route */}
-      <Route path="/docs" element={<DocsPage />} />
-      <Route path="/contact" element={<ContactPage />} />
+        {/* Public documentation route */}
+        <Route path="/docs" element={<DocsPage />} />
+        <Route path="/contact" element={<ContactPage />} />
 
-      {/* Auth routes */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignUpPage />} />
-      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        {/* Auth routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-      {/* Shopkeeper routes */}
-      <Route
-        path="/shopkeeper"
-        element={
-          <PrivateRoute>
-            <RoleBasedRoute allowedRoles={['SHOPKEEPER']}>
-              <ShopkeeperLayout />
-            </RoleBasedRoute>
-          </PrivateRoute>
-        }
-      >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<ShopkeeperDashboard />} />
-        <Route path="profile" element={<ShopkeeperProfile />} />
-        <Route path="warehouses" element={<NearbyWarehouses />} />
-        <Route path="inventory" element={<BrowseInventory />} />
-        <Route path="orders" element={<OrdersList />} />
-        <Route path="orders/create" element={<CreateOrder />} />
-        <Route path="orders/:orderId" element={<OrderDetails />} />
-      </Route>
+        {/* Shopkeeper routes */}
+        <Route
+          path="/shopkeeper"
+          element={
+            <PrivateRoute>
+              <RoleBasedRoute allowedRoles={['SHOPKEEPER']}>
+                <ShopkeeperLayout />
+              </RoleBasedRoute>
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<ShopkeeperDashboard />} />
+          <Route path="profile" element={<ShopkeeperProfile />} />
+          <Route path="warehouses" element={<NearbyWarehouses />} />
+          <Route path="inventory" element={<BrowseInventory />} />
+          <Route path="orders" element={<OrdersList />} />
+          <Route path="orders/create" element={<CreateOrder />} />
+          <Route path="orders/:orderId" element={<OrderDetails />} />
+        </Route>
 
-      {/* Warehouse routes */}
-      <Route
-        path="/warehouse"
-        element={
-          <PrivateRoute>
-            <RoleBasedRoute allowedRoles={['WAREHOUSE_MANAGER']}>
-              <WarehouseLayout />
-            </RoleBasedRoute>
-          </PrivateRoute>
-        }
-      >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<WarehouseDashboard />} />
-        <Route path="profile" element={<WarehouseProfile />} />
-        <Route path="inventory" element={<WarehouseInventory />} />
-        <Route path="orders" element={<WarehouseOrders />} />
-        <Route path="orders/:orderId" element={<WarehouseOrderDetails />} />
-        <Route path="riders" element={<RiderManagement />} />
-      </Route>
+        {/* Warehouse routes */}
+        <Route
+          path="/warehouse"
+          element={
+            <PrivateRoute>
+              <RoleBasedRoute allowedRoles={['WAREHOUSE_MANAGER']}>
+                <WarehouseLayout />
+              </RoleBasedRoute>
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<WarehouseDashboard />} />
+          <Route path="profile" element={<WarehouseProfile />} />
+          <Route path="inventory" element={<WarehouseInventory />} />
+          <Route path="orders" element={<WarehouseOrders />} />
+          <Route path="orders/:orderId" element={<WarehouseOrderDetails />} />
+          <Route path="riders" element={<RiderManagement />} />
+        </Route>
 
-      {/* Rider routes */}
-      <Route
-        path="/rider"
-        element={
-          <PrivateRoute>
-            <RoleBasedRoute allowedRoles={['RIDER']}>
-              <RiderLayout />
-            </RoleBasedRoute>
-          </PrivateRoute>
-        }
-      >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<RiderDashboard />} />
-        <Route path="profile" element={<RiderProfile />} />
-        <Route path="deliveries" element={<RiderDeliveries />} />
-        <Route path="deliveries/:orderId" element={<RiderDeliveryDetails />} />
-        <Route path="earnings" element={<RiderEarnings />} />
-      </Route>
+        {/* Rider routes */}
+        <Route
+          path="/rider"
+          element={
+            <PrivateRoute>
+              <RoleBasedRoute allowedRoles={['RIDER']}>
+                <RiderLayout />
+              </RoleBasedRoute>
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<RiderDashboard />} />
+          <Route path="profile" element={<RiderProfile />} />
+          <Route path="deliveries" element={<RiderDeliveries />} />
+          <Route path="deliveries/:orderId" element={<RiderDeliveryDetails />} />
+          <Route path="earnings" element={<RiderEarnings />} />
+        </Route>
 
-      {/* Admin routes */}
-      <Route
-        path="/admin"
-        element={
-          <PrivateRoute>
-            <RoleBasedRoute allowedRoles={['SUPER_ADMIN']}>
-              <AdminLayout />
-            </RoleBasedRoute>
-          </PrivateRoute>
-        }
-      >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="users" element={<UserManagement />} />
-        <Route path="warehouses" element={<WarehouseManagement />} />
-      </Route>
+        {/* Admin routes */}
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <RoleBasedRoute allowedRoles={['SUPER_ADMIN']}>
+                <AdminLayout />
+              </RoleBasedRoute>
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="warehouses" element={<WarehouseManagement />} />
+        </Route>
 
-      {/* 404 */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* 404 */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </PageTransition>
   );
 }

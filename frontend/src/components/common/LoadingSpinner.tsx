@@ -18,6 +18,13 @@ export default function LoadingSpinner({
       alignItems="center"
       justifyContent="center"
       gap={2}
+      sx={{
+        animation: 'fadeIn var(--motion-duration-base) var(--motion-easing-decelerate)',
+        '@keyframes fadeIn': {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
+      }}
     >
       <CircularProgress size={size} />
       {message && (

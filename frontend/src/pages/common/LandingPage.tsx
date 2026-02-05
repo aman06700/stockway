@@ -15,6 +15,7 @@ import {
 import { Link as RouterLink } from 'react-router-dom';
 import PublicNavbar from '@/components/common/PublicNavbar';
 import Footer from '@/components/common/Footer';
+import FadeIn from '@/components/common/FadeIn';
 
 export default function LandingPage() {
   const ecosystem = [
@@ -233,39 +234,52 @@ export default function LandingPage() {
       {/* Section 2: Ecosystem (Who it's for) */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
         <Container maxWidth="lg" sx={{ py: 12 }}>
-          <Box mb={8} textAlign="center">
-            <Typography variant="h3" fontWeight={700} letterSpacing="-0.02em" mb={2}>
-              Built for the entire chain
-            </Typography>
-            <Typography variant="body1" color="text.secondary" maxWidth="600px" mx="auto">
-              Every stakeholder gets a dedicated interface tailored to their specific workflow needs.
-            </Typography>
-          </Box>
+          <FadeIn>
+            <Box mb={8} textAlign="center">
+              <Typography variant="h3" fontWeight={700} letterSpacing="-0.02em" mb={2}>
+                Built for the entire chain
+              </Typography>
+              <Typography variant="body1" color="text.secondary" maxWidth="600px" mx="auto">
+                Every stakeholder gets a dedicated interface tailored to their specific workflow needs.
+              </Typography>
+            </Box>
+          </FadeIn>
           <Grid container spacing={4}>
             {ecosystem.map((role, index) => (
               <Grid item xs={12} md={4} key={index}>
-                <Card sx={{ height: '100%', bgcolor: 'background.default' }} variant="outlined">
-                  <CardContent sx={{ p: 4 }}>
-                    <Box sx={{
-                      width: 56, height: 56,
-                      borderRadius: 2,
-                      bgcolor: 'background.paper',
-                      border: 1,
-                      borderColor: 'divider',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      mb: 3,
-                      color: 'text.primary'
-                    }}>
-                      {role.icon}
-                    </Box>
-                    <Typography variant="h5" gutterBottom fontWeight={600}>
-                      {role.title}
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                      {role.description}
-                    </Typography>
-                  </CardContent>
-                </Card>
+                <FadeIn delay={index * 80}>
+                  <Card
+                    sx={{
+                      height: '100%',
+                      bgcolor: 'background.default',
+                      '&:hover': {
+                        borderColor: 'text.disabled',
+                      },
+                    }}
+                    variant="outlined"
+                  >
+                    <CardContent sx={{ p: 4 }}>
+                      <Box sx={{
+                        width: 56, height: 56,
+                        borderRadius: 2,
+                        bgcolor: 'background.paper',
+                        border: 1,
+                        borderColor: 'divider',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        mb: 3,
+                        color: 'text.primary'
+                      }}>
+                        {role.icon}
+                      </Box>
+                      <Typography variant="h5" gutterBottom fontWeight={600}>
+                        {role.title}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">
+                        {role.description}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </FadeIn>
               </Grid>
             ))}
           </Grid>
@@ -274,36 +288,40 @@ export default function LandingPage() {
 
       {/* Section 3: Workflow (How it works) */}
       <Container maxWidth="lg" sx={{ py: 16 }}>
-        <Box mb={10} textAlign={{ xs: 'left', md: 'center' }}>
-          <Typography variant="h3" fontWeight={700} letterSpacing="-0.02em" mb={2}>
-            How Stockway Works
-          </Typography>
-        </Box>
+        <FadeIn>
+          <Box mb={10} textAlign={{ xs: 'left', md: 'center' }}>
+            <Typography variant="h3" fontWeight={700} letterSpacing="-0.02em" mb={2}>
+              How Stockway Works
+            </Typography>
+          </Box>
+        </FadeIn>
 
-        <Grid container spacing={0} sx={{
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: { xs: 4, md: 4 },
-          overflow: 'hidden'
-        }}>
-          {workflow.map((step, index) => (
-            <Grid item xs={12} md={4} key={index} sx={{
-              borderBottom: { xs: 1, md: 0 },
-              borderRight: { xs: 0, md: 1 },
-              borderColor: 'divider',
-              '&:last-child': { borderRight: 0, borderBottom: 0 }
-            }}>
-              <Box sx={{ p: 6, height: '100%', bgcolor: 'background.paper', transition: 'background-color 0.2s', '&:hover': { bgcolor: 'background.default' } }}>
-                <Box display="flex" justifyContent="space-between" mb={4}>
-                  <Typography variant="h2" fontWeight={800} sx={{ opacity: 0.1 }}>{step.step}</Typography>
-                  {step.icon}
+        <FadeIn delay={100}>
+          <Grid container spacing={0} sx={{
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: { xs: 4, md: 4 },
+            overflow: 'hidden'
+          }}>
+            {workflow.map((step, index) => (
+              <Grid item xs={12} md={4} key={index} sx={{
+                borderBottom: { xs: 1, md: 0 },
+                borderRight: { xs: 0, md: 1 },
+                borderColor: 'divider',
+                '&:last-child': { borderRight: 0, borderBottom: 0 }
+              }}>
+                <Box sx={{ p: 6, height: '100%', bgcolor: 'background.paper', transition: 'background-color 0.2s', '&:hover': { bgcolor: 'background.default' } }}>
+                  <Box display="flex" justifyContent="space-between" mb={4}>
+                    <Typography variant="h2" fontWeight={800} sx={{ opacity: 0.1 }}>{step.step}</Typography>
+                    {step.icon}
+                  </Box>
+                  <Typography variant="h5" fontWeight={600} gutterBottom>{step.title}</Typography>
+                  <Typography variant="body1" color="text.secondary">{step.desc}</Typography>
                 </Box>
-                <Typography variant="h5" fontWeight={600} gutterBottom>{step.title}</Typography>
-                <Typography variant="body1" color="text.secondary">{step.desc}</Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
+              </Grid>
+            ))}
+          </Grid>
+        </FadeIn>
       </Container>
 
 
@@ -312,32 +330,48 @@ export default function LandingPage() {
         <Container maxWidth="lg" sx={{ py: 16 }}>
           <Grid container spacing={8} alignItems="center">
             <Grid item xs={12} md={5}>
-              <Typography variant="h3" fontWeight={700} mb={3}>
-                Enterprise-grade <br /> capabilities
-              </Typography>
-              <Typography variant="body1" color="text.secondary" mb={4} fontSize="1.125rem">
-                Scalable infrastructure designed to handle high-frequency transactions and large-scale inventory management without compromising performance.
-              </Typography>
-              <Button
-                variant="outlined"
-                size="large"
-                endIcon={<ArrowForward />}
-                sx={{ textTransform: 'none' }}
-                component={RouterLink}
-                to="/signup"
-              >
-                Explore Features
-              </Button>
+              <FadeIn direction="left">
+                <Typography variant="h3" fontWeight={700} mb={3}>
+                  Enterprise-grade <br /> capabilities
+                </Typography>
+                <Typography variant="body1" color="text.secondary" mb={4} fontSize="1.125rem">
+                  Scalable infrastructure designed to handle high-frequency transactions and large-scale inventory management without compromising performance.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  endIcon={<ArrowForward />}
+                  sx={{ textTransform: 'none' }}
+                  component={RouterLink}
+                  to="/signup"
+                >
+                  Explore Features
+                </Button>
+              </FadeIn>
             </Grid>
             <Grid item xs={12} md={7}>
               <Grid container spacing={4}>
                 {capabilities.map((cap, i) => (
                   <Grid item xs={12} sm={6} key={i}>
-                    <Box sx={{ p: 3, border: 1, borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}>
-                      <Box sx={{ mb: 2, color: 'text.primary' }}>{cap.icon}</Box>
-                      <Typography variant="h6" fontWeight={600} gutterBottom>{cap.title}</Typography>
-                      <Typography variant="body2" color="text.secondary">{cap.description}</Typography>
-                    </Box>
+                    <FadeIn delay={i * 60}>
+                      <Box
+                        sx={{
+                          p: 3,
+                          border: 1,
+                          borderColor: 'divider',
+                          borderRadius: 2,
+                          bgcolor: 'background.paper',
+                          transition: 'border-color 180ms ease',
+                          '&:hover': {
+                            borderColor: 'text.disabled',
+                          },
+                        }}
+                      >
+                        <Box sx={{ mb: 2, color: 'text.primary' }}>{cap.icon}</Box>
+                        <Typography variant="h6" fontWeight={600} gutterBottom>{cap.title}</Typography>
+                        <Typography variant="body2" color="text.secondary">{cap.description}</Typography>
+                      </Box>
+                    </FadeIn>
                   </Grid>
                 ))}
               </Grid>
@@ -349,21 +383,23 @@ export default function LandingPage() {
       {/* Section 5: Final CTA */}
       <Box sx={{ borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper', py: 16 }}>
         <Container maxWidth="md" sx={{ textAlign: 'center' }}>
-          <Typography variant="h2" fontWeight={700} mb={3} letterSpacing="-0.03em">
-            Ready to optimize your supply chain?
-          </Typography>
-          <Typography variant="h6" color="text.secondary" fontWeight={400} mb={6} maxWidth="600px" mx="auto">
-            Join hundreds of businesses using Stockway to streamline their delivery network.
-          </Typography>
-          <Button
-            component={RouterLink}
-            to="/signup"
-            variant="contained"
-            size="large"
-            sx={{ px: 8, py: 2, fontSize: '1.125rem', borderRadius: 2, textTransform: 'none' }}
-          >
-            Get Started Now
-          </Button>
+          <FadeIn>
+            <Typography variant="h2" fontWeight={700} mb={3} letterSpacing="-0.03em">
+              Ready to optimize your supply chain?
+            </Typography>
+            <Typography variant="h6" color="text.secondary" fontWeight={400} mb={6} maxWidth="600px" mx="auto">
+              Join hundreds of businesses using Stockway to streamline their delivery network.
+            </Typography>
+            <Button
+              component={RouterLink}
+              to="/signup"
+              variant="contained"
+              size="large"
+              sx={{ px: 8, py: 2, fontSize: '1.125rem', borderRadius: 2, textTransform: 'none' }}
+            >
+              Get Started Now
+            </Button>
+          </FadeIn>
         </Container>
       </Box>
 

